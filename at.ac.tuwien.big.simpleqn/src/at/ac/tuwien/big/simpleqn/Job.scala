@@ -55,9 +55,8 @@ class Job(val arrivalTime: Int, val net: QueueingNet) {
     overallServiceTime + overallWaitingTime
   }
 
-  def averageWaitingTime: Double = {
-    val waitintTimeD: Double = overallWaitingTime
-    waitintTimeD / requests.size
+  def averageWaitingTime = {
+    overallWaitingTime / requests.size.toDouble
   }
 
   def maxWaitingTime = {
