@@ -86,7 +86,7 @@ class Request(val job: Job, val service: Service, val serviceTime: Int) {
   }
 
   def waitingAt(time: Int) = {
-    time >= arrivalTime && time < leavingQueueTime// && !processingAt(time)
+    time >= arrivalTime && time < leavingQueueTime
   }
 
 }

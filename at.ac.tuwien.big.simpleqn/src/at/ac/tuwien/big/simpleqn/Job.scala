@@ -35,11 +35,11 @@ class Job(val arrivalTime: Int, val net: QueuingNet) {
     (0 /: requests) { (maxValue, request) => Math.max(maxValue, value(request)) }
   }
 
-  def requestService(service: Service): Request = {
-    requestService(service, service.serviceTime)
+  def request(service: Service): Request = {
+    request(service, service.serviceTime)
   }
 
-  def requestService(service: Service, serviceTime: Int) = {
+  def request(service: Service, serviceTime: Int) = {
     assert(service.net == net)
     val request = new Request(this, service, serviceTime)
     _requests += request
@@ -48,11 +48,11 @@ class Job(val arrivalTime: Int, val net: QueuingNet) {
   }
 
   def waitingAt(time: Int) = {
-    requests.exists {_.waitingAt(time)}
+    requests.exists { _.waitingAt(time) }
   }
 
   def processingAt(time: Int) = {
-    requests.exists {_.processingAt(time)}
+    requests.exists { _.processingAt(time) }
   }
 
   def overallServiceTime: Int = {

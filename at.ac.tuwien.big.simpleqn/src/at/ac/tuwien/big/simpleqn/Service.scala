@@ -56,7 +56,7 @@ class Service(val name: String, val serviceTime: Int, val net: QueuingNet) {
     }
   }
 
-  def averageQueueLength(range: Range) = {
+  def avgQueueLength(range: Range) = {
     (0 /: range) { _ + requestQueueLengthAt(_) } / range.length.toDouble
   }
 
