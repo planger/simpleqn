@@ -32,7 +32,7 @@ public class SimpleQNIntegrationTest extends TestCase {
 		Request requestJob2Service1 = job2.requestService(service1);
 		Request requestJob2Service3 = job2.requestService(service3);
 		Request requestJob2Service4 = job2.requestService(service4);
-
+				
 		// assert overall service time
 		assertEquals(7, job1.overallServiceTime());
 		assertEquals(8, job2.overallServiceTime());
@@ -98,7 +98,9 @@ public class SimpleQNIntegrationTest extends TestCase {
 		assertEquals(8, requestJob1Service4.leavingServiceTime());
 		assertEquals(3, requestJob2Service1.leavingServiceTime());
 		assertEquals(6, requestJob2Service3.leavingServiceTime());
+		assertEquals(3, requestJob2Service3.leavingQueueTime());
 		assertEquals(12, requestJob2Service4.leavingServiceTime());
+		assertEquals(8, requestJob2Service4.leavingQueueTime());
 
 		assertEquals(7, job1.overallServiceTime());
 		assertEquals(0, job1.overallWaitingTime());
@@ -139,13 +141,61 @@ public class SimpleQNIntegrationTest extends TestCase {
 		assertEquals(1, net.busyTime(range(0, 1)));
 		assertEquals(0.5, net.utilization(range(0, 1)));
 		assertEquals(1.0, net.utilization(range(1, 2)));
-		assertEquals(1.0, net.utilization(range(1, 12)));
+		assertEquals(1.0, net.utilization(range(1, 11)));
 
 		// assert number of completed jobs and throughput
 		assertEquals(2, net.completedJobs().size());
 		assertEquals(1, net.completedJobs(8).size());
 		assertEquals(0, net.completedJobs(7).size());
-		assertEquals(2d/12d, net.throughput());
+		assertEquals(2d / 12d, net.throughput());
+	}
+
+	public void testJobDependentServiceTime() {
+		QueuingNet net = new QueuingNet();
+		Service service1 = new Service("Service1", 2, net);
+		Service service2 = new Service("Service2", 2, net);
+
+		Job job1 = new Job(1, net);
+		Job job2 = new Job(2, net);
+		Job job3 = new Job(3, net);
+		Job job4 = new Job(4, net);
+
+		Request reqJob1Service1 = job1.requestService(service1, 3);
+		Request reqJob1Service2 = job1.requestService(service2, 3);
+		Request reqJob2Service1 = job2.requestService(service1, 4);
+		Request reqJob2Service2 = job2.requestService(service2);
+		Request reqJob3Service1 = job3.requestService(service1, 1);
+		Request reqJob3Service2 = job3.requestService(service2, 5);
+		Request reqJob4Service1 = job4.requestService(service1);
+		Request reqJob4Service2 = job4.requestService(service2, 4);
+		
+		assertEquals(2, reqJob2Service1.waitingTime());
+		assertEquals(0, reqJob2Service2.waitingTime());
+
+		assertEquals(3, reqJob1Service1.serviceTime());
+		assertEquals(3, reqJob1Service2.serviceTime());
+		assertEquals(4, reqJob2Service1.serviceTime());
+		assertEquals(2, reqJob2Service2.serviceTime());
+		assertEquals(1, reqJob3Service1.serviceTime());
+		assertEquals(5, reqJob3Service2.serviceTime());
+		assertEquals(2, reqJob4Service1.serviceTime());
+		assertEquals(4, reqJob4Service2.serviceTime());
+		
+		assertEquals(6, job1.overallResidenceTime());
+		assertEquals(0, job1.overallWaitingTime());
+		assertEquals(7, job1.completionTime());
+		
+		assertEquals(2, job2.overallWaitingTime());
+		assertEquals(10, job2.completionTime());
+		assertEquals(8, job2.overallResidenceTime());
+		
+		assertEquals(15, job3.completionTime());
+		assertEquals(6, job3.overallWaitingTime());
+		assertEquals(12, job3.overallResidenceTime());
+		
+		assertEquals(9, job4.overallWaitingTime());
+		assertEquals(15, job4.overallResidenceTime());
+		assertEquals(19, job4.completionTime());
 	}
 
 	private Range range(int from, int to) {

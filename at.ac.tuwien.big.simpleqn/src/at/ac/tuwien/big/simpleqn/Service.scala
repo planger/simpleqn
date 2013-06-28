@@ -36,9 +36,10 @@ class Service(val name: String, val serviceTime: Int, val net: QueuingNet) {
   }
 
   def requestQueueAt(time: Int): List[Request] = {
-    sortByArrivalTime(requests
-      filter (_.arrivalTime <= time)
-      filter (_.leavingQueueTime > time))
+    val queueAtTime = requests filter { request =>
+      time >= request.arrivalTime && time < request.leavingQueueTime
+    }
+    sortByArrivalTime(queueAtTime)
   }
 
   def requestQueueLengthAt(time: Int) = {
@@ -46,7 +47,13 @@ class Service(val name: String, val serviceTime: Int, val net: QueuingNet) {
   }
 
   def sortByArrivalTime(requestList: List[Request]) = {
-    requestList sortWith (_.arrivalTime < _.arrivalTime)
+    requestList sortWith { (r1, r2) =>
+      if (r1.arrivalTime != r2.arrivalTime) {
+        r1.arrivalTime < r2.arrivalTime
+      } else {
+        r1.job.arrivalTime < r2.job.arrivalTime
+      }
+    }
   }
 
   def averageQueueLength(range: Range) = {
@@ -58,7 +65,7 @@ class Service(val name: String, val serviceTime: Int, val net: QueuingNet) {
   }
 
   def busyAt(time: Int) = {
-    requests.exists(_.isProcessingAt(time))
+    requests exists { _.processingAt(time) }
   }
 
   def busyTime(range: Range) = {

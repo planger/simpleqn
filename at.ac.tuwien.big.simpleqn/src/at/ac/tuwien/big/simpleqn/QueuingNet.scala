@@ -42,7 +42,7 @@ class QueuingNet() {
   def completedJobs: List[Job] = {
     completedJobs(0 until completionTime)
   }
-  
+
   def completedJobs(toTime: Int): List[Job] = {
     completedJobs(0 to toTime)
   }
@@ -60,13 +60,33 @@ class QueuingNet() {
   def utilization: Double = {
     utilization(0 until completionTime)
   }
-  
+
   def throughput(range: Range): Double = {
     completedJobs(range).length / range.length.toDouble
   }
-  
+
   def throughput: Double = {
     throughput(0 until completionTime)
+  }
+
+  def debugPrint {
+    debugPrintScale
+    for (j <- jobs) { debugPrint(j) }
+  }
+
+  private def debugPrintScale {
+    (0 to completionTime) foreach { i => print("|  " + i + "  ") }
+    println("|")
+  }
+
+  private def debugPrint(job: Job) {
+    (0 until job.arrivalTime) foreach { i => print("|" + ".." + i + "..") }
+    (job.arrivalTime to completionTime) foreach { i =>
+      if (i >= job.completionTime) print("|.." + i + "..")
+      else if (job.waitingAt(i)) print("|w " + i + " w")
+      else if (job.processingAt(i)) print("|b " + i + " b")
+    }
+    println("|")
   }
 
 }

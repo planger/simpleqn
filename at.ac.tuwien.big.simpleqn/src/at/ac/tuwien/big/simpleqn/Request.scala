@@ -9,10 +9,11 @@
  */
 package at.ac.tuwien.big.simpleqn
 
-class Request(val job: Job, val service: Service) {
+class Request(val job: Job, val service: Service, val serviceTime: Int) {
 
-  val net = job.net
+  def this(job: Job, service: Service) = this(job, service, service.serviceTime)
 
+  def net = job.net
   def jobRequests = job.requests
   def index = jobRequests.indexOf(this)
   def previousIndex = index - 1
@@ -32,33 +33,29 @@ class Request(val job: Job, val service: Service) {
       None
   }
 
-  private def ealierOtherRequests() = {
+  private def earlierOtherRequests() = {
     val requests = service.requests
     requests.slice(0, requests.indexOf(this))
   }
 
-  private def waitingTimeBehind(request: Request) = {
-    request.waitingTime - arrivalTimeDifference(request)
+  private def arrivalTimeDifference = {
+    if (haveEarlierRequests) {
+      arrivalTime - earlierOtherRequests.last.arrivalTime
+    } else 0
   }
 
-  private def arrivalTimeDifference(request: Request) = {
-    if (arrivalTime > request.arrivalTime) {
-      arrivalTime - request.arrivalTime
-    } else {
-      request.arrivalTime - arrivalTime
-    }
+  private def haveEarlierRequests = {
+    !earlierOtherRequests.isEmpty
   }
 
   def waitingTime: Int = {
-    val earlierRequests = ealierOtherRequests
-    if (earlierRequests.length < 1)
-      0
-    else
-      (0 /: earlierRequests) { _ + waitingTimeBehind(_) } + serviceTime
-  }
-
-  def serviceTime = {
-    service.serviceTime
+    if (earlierOtherRequests.length < 1) 0
+    else {
+      val time = (0 /: earlierOtherRequests) { (time, prevReq) =>
+        time + prevReq.waitingTime
+      } + earlierOtherRequests.last.serviceTime
+      if (arrivalTimeDifference < time) time - arrivalTimeDifference else 0
+    }
   }
 
   def residenceTime = {
@@ -83,9 +80,13 @@ class Request(val job: Job, val service: Service) {
       prevRequest.pastResidenceTime + prevRequest.waitingTime + prevRequest.serviceTime
     } else 0
   }
-  
-  def isProcessingAt(time: Int) = {
-    time >= leavingQueueTime && time <= leavingServiceTime
+
+  def processingAt(time: Int) = {
+    time >= leavingQueueTime && time < leavingServiceTime
+  }
+
+  def waitingAt(time: Int) = {
+    time >= arrivalTime && time < leavingQueueTime// && !processingAt(time)
   }
 
 }
