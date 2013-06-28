@@ -18,7 +18,7 @@ import scala.collection.mutable.ListBuffer
  *
  * @param arrivalTime
  */
-class Job(val arrivalTime: Int, val net: QueueingNet) {
+class Job(val arrivalTime: Int, val net: QueuingNet) {
   net.jobs += this
 
   private val _requests = new ListBuffer[Request]

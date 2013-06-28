@@ -11,7 +11,7 @@ package at.ac.tuwien.big.simpleqn
 
 import scala.collection.mutable
 
-class QueueingNet() {
+class QueuingNet() {
 
   protected[simpleqn] val services = new mutable.MutableList[Service]
   protected[simpleqn] val jobs = new mutable.HashSet[Job]

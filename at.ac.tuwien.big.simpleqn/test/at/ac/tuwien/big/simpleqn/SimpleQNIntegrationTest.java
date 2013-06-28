@@ -12,10 +12,10 @@ package at.ac.tuwien.big.simpleqn;
 import junit.framework.TestCase;
 import scala.collection.immutable.Range;
 
-public class ServiceIntegrationTest extends TestCase {
+public class SimpleQNIntegrationTest extends TestCase {
 
-	public void testSettingUpQueueingNetwork() {
-		QueueingNet net = new QueueingNet();
+	public void testBasicQN() {
+		QueuingNet net = new QueuingNet();
 		Service service1 = new Service("Service1", 1, net);
 		Service service2 = new Service("Service2", 2, net);
 		Service service3 = new Service("Service3", 3, net);

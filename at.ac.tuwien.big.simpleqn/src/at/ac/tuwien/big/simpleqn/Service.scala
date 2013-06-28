@@ -14,7 +14,7 @@ import scala.reflect.internal.util.Collections
 import scala.collection.mutable.ListBuffer
 import scala.Immutable
 
-class Service(val name: String, val serviceTime: Int, val net: QueueingNet) {
+class Service(val name: String, val serviceTime: Int, val net: QueuingNet) {
   net.services += this
 
   private val _requests = new ListBuffer[Request]
