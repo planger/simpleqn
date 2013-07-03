@@ -13,11 +13,6 @@ import scala.collection.mutable.HashSet
 import scala.collection.mutable.MutableList
 import scala.collection.mutable.ListBuffer
 
-/**
- * Residence time = service time + waiting time
- *
- * @param arrivalTime
- */
 class Job(val arrivalTime: Int, val net: QueuingNet) {
   net.jobs += this
 
@@ -40,7 +35,6 @@ class Job(val arrivalTime: Int, val net: QueuingNet) {
   }
 
   def request(service: Service, serviceTime: Int) = {
-    assert(service.net == net)
     val request = new Request(this, service, serviceTime)
     _requests += request
     service.addRequest(request)

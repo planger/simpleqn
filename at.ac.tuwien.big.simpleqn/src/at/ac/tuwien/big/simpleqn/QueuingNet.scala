@@ -10,13 +10,17 @@
 package at.ac.tuwien.big.simpleqn
 
 import scala.collection.mutable
+import scala.collection.JavaConversions
 
-class QueuingNet() {
+class QueuingNet(val services: List[Service]) {
+  
+  def this(serviceList: java.util.List[Service]) = {
+    this(JavaConversions.asScalaBuffer(serviceList).toList)
+  }
 
-  protected[simpleqn] val services = new mutable.MutableList[Service]
   protected[simpleqn] val jobs = new mutable.HashSet[Job]
 
-  protected[simpleqn] def countIf(bool: Boolean) = {
+  private def countIf(bool: Boolean) = {
     if (bool) 1 else 0
   }
 

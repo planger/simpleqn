@@ -14,10 +14,13 @@ import scala.reflect.internal.util.Collections
 import scala.collection.mutable.ListBuffer
 import scala.Immutable
 
-class Service(val name: String, val serviceTime: Int, val net: QueuingNet) {
-  net.services += this
+class Service(val name: String, val serviceTime: Int) {
 
   private val _requests = new ListBuffer[Request]
+  
+  private def countIf(bool: Boolean) = {
+    if (bool) 1 else 0
+  }
 
   protected[simpleqn] def addRequest(request: Request) {
     _requests += request
@@ -69,7 +72,7 @@ class Service(val name: String, val serviceTime: Int, val net: QueuingNet) {
   }
 
   def busyTime(range: Range) = {
-    (0 /: range) { (busyTime, time) => busyTime + net.countIf(busyAt(time)) }
+    (0 /: range) { (busyTime, time) => busyTime + countIf(busyAt(time)) }
   }
 
   def idleTime(range: Range) = {
@@ -78,10 +81,6 @@ class Service(val name: String, val serviceTime: Int, val net: QueuingNet) {
 
   def utilization(range: Range): Double = {
     busyTime(range) / range.length.toDouble
-  }
-
-  def utilization: Double = {
-    utilization(0 to net.completionTime)
   }
 
 }

@@ -9,17 +9,30 @@
  */
 package at.ac.tuwien.big.simpleqn;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import junit.framework.TestCase;
+import scala.actors.threadpool.Arrays;
 import scala.collection.immutable.Range;
+import at.ac.tuwien.big.simpleqn.strategies.AvgQueueLengthScaling;
+import at.ac.tuwien.big.simpleqn.strategies.RoundRobinBalancing;
 
 public class SimpleQNIntegrationTest extends TestCase {
 
 	public void testBasicQN() {
-		QueuingNet net = new QueuingNet();
-		Service service1 = new Service("Service1", 1, net);
-		Service service2 = new Service("Service2", 2, net);
-		Service service3 = new Service("Service3", 3, net);
-		Service service4 = new Service("Service4", 4, net);
+		Service service1 = new Service("Service1", 1);
+		Service service2 = new Service("Service2", 2);
+		Service service3 = new Service("Service3", 3);
+		Service service4 = new Service("Service4", 4);
+
+		List<Service> services = new ArrayList<Service>();
+		services.add(service1);
+		services.add(service2);
+		services.add(service3);
+		services.add(service4);
+
+		QueuingNet net = new QueuingNet(services);
 
 		Job job1 = new Job(1, net);
 		Job job2 = new Job(2, net);
@@ -147,9 +160,14 @@ public class SimpleQNIntegrationTest extends TestCase {
 	}
 
 	public void testJobDependentServiceTime() {
-		QueuingNet net = new QueuingNet();
-		Service service1 = new Service("Service1", 2, net);
-		Service service2 = new Service("Service2", 2, net);
+		Service service1 = new Service("Service1", 2);
+		Service service2 = new Service("Service2", 2);
+
+		List<Service> services = new ArrayList<Service>();
+		services.add(service1);
+		services.add(service2);
+
+		QueuingNet net = new QueuingNet(services);
 
 		Job job1 = new Job(1, net);
 		Job job2 = new Job(2, net);
@@ -197,6 +215,111 @@ public class SimpleQNIntegrationTest extends TestCase {
 	private Range range(int from, int to) {
 		// Range is inclusive
 		return new Range(from, to + 1, 1);
+	}
+
+	@SuppressWarnings("unchecked")
+	public void testFixedBalancerWithRoundRobin() {
+		FixedBalancer balancer1 = new FixedBalancer("balance1", 2,
+				new RoundRobinBalancing(5), 2);
+		FixedBalancer balancer2 = new FixedBalancer("balance2", 3,
+				new RoundRobinBalancing(5), 2);
+
+		Service[] services = { balancer1, balancer2 };
+		QueuingNet net = new QueuingNet(Arrays.asList(services));
+
+		Job job1 = new Job(1, net);
+		Job job2 = new Job(2, net);
+
+		Request reqJ1B1 = job1.request(balancer1);
+		Request reqJ1B2 = job1.request(balancer2);
+		Request reqJ2B1 = job2.request(balancer1);
+		Request reqJ2B2 = job2.request(balancer2);
+
+		assertTrue(balancer1.services().head() == reqJ1B1.nextRequestInJob()
+				.get().service());
+		assertTrue(balancer1.services().last() != reqJ1B1.nextRequestInJob()
+				.get().service());
+		assertTrue(balancer1.services().last() == reqJ2B1.nextRequestInJob()
+				.get().service());
+		assertTrue(balancer1.services().head() != reqJ2B1.nextRequestInJob()
+				.get().service());
+
+		assertTrue(balancer2.services().head() == reqJ1B2.nextRequestInJob()
+				.get().service());
+		assertTrue(balancer2.services().last() != reqJ1B2.nextRequestInJob()
+				.get().service());
+		assertTrue(balancer2.services().last() == reqJ2B2.nextRequestInJob()
+				.get().service());
+		assertTrue(balancer2.services().head() != reqJ2B2.nextRequestInJob()
+				.get().service());
+
+		assertEquals(15, job1.overallResidenceTime());
+		assertEquals(0, job1.overallWaitingTime());
+		assertEquals(17, job2.overallResidenceTime());
+		assertEquals(2, job2.overallWaitingTime());
+
+		Job job3 = new Job(3, net);
+		Request reqJ3B1 = job3.request(balancer1);
+		Request reqJ3B2 = job3.request(balancer2);
+
+		assertTrue(balancer1.services().head() == reqJ3B1.nextRequestInJob()
+				.get().service());
+		assertTrue(balancer1.services().last() != reqJ3B1.nextRequestInJob()
+				.get().service());
+		assertTrue(balancer2.services().head() == reqJ3B2.nextRequestInJob()
+				.get().service());
+		assertTrue(balancer2.services().last() != reqJ3B2.nextRequestInJob()
+				.get().service());
+
+		assertEquals(19, job3.overallResidenceTime());
+		assertEquals(4, job3.overallWaitingTime());
+	}
+
+	@SuppressWarnings("unchecked")
+	public void testScalingBalancerWithRoundRobin() {
+		ScalingBalancer balancer1 = new ScalingBalancer("balance1", 2,
+				new RoundRobinBalancing(5), new AvgQueueLengthScaling(range(1,
+						5), 0, 1.9, 1.0));
+		ScalingBalancer balancer2 = new ScalingBalancer("balance2", 3,
+				new RoundRobinBalancing(5), new AvgQueueLengthScaling(range(1,
+						5), 0, 1.9, 1.0));
+
+		Service[] services = { balancer1, balancer2 };
+		QueuingNet net = new QueuingNet(Arrays.asList(services));
+
+		Job job1 = new Job(1, net);
+		Job job2 = new Job(2, net);
+		Job job3 = new Job(3, net);
+		Job job4 = new Job(4, net);
+		
+		job1.request(balancer1);
+		job1.request(balancer2);
+		job1.request(balancer1);
+		job1.request(balancer2);
+		job1.request(balancer1);
+		job1.request(balancer2);
+		
+		job2.request(balancer1);
+		job2.request(balancer2);
+		job2.request(balancer1);
+		job2.request(balancer2);
+		job2.request(balancer1);
+		job2.request(balancer2);
+		
+		job3.request(balancer1);
+		job3.request(balancer2);
+		job3.request(balancer1);
+		job3.request(balancer2);
+		job3.request(balancer1);
+		job3.request(balancer2);
+		
+		job4.request(balancer1);
+		job4.request(balancer2);
+		job4.request(balancer1);
+		job4.request(balancer2);
+		job4.request(balancer1);
+		job4.request(balancer2);
+
 	}
 
 }
