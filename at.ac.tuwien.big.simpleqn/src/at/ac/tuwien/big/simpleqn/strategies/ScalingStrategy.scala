@@ -11,8 +11,11 @@ package at.ac.tuwien.big.simpleqn.strategies
 
 import at.ac.tuwien.big.simpleqn.Service
 import at.ac.tuwien.big.simpleqn.Request
+import at.ac.tuwien.big.simpleqn.ScalingBalancer
 
 abstract class ScalingStrategy(val numberOfServices: Range, val startUpTime: Int) {
+  
+  var balancer: ScalingBalancer = null
   
   def shouldScaleOut(request: Request, services: List[Service]): Boolean
 

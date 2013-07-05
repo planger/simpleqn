@@ -218,6 +218,46 @@ public class SimpleQNIntegrationTest extends TestCase {
 	}
 
 	@SuppressWarnings("unchecked")
+	public void testMultipleRequestsToSameService() {
+		Service service1 = new Service("Service1", 2);
+		Service service2 = new Service("Service2", 2);
+
+		Service[] services = { service1, service2 };
+		QueuingNet net = new QueuingNet(Arrays.asList(services));
+
+		Job job1 = new Job(1, net);
+		Job job2 = new Job(1, net);
+
+		for (int i = 0; i < 2; i++) {
+			job1.request(service1);
+			job2.request(service1);
+			job1.request(service2);
+			job2.request(service2);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	public void testMultipleRequestsToBalancingService() {
+		FixedBalancer service1 = new FixedBalancer("balance1", 2,
+				new RoundRobinBalancing(5), 2);
+		FixedBalancer service2 = new FixedBalancer("balance2", 3,
+				new RoundRobinBalancing(5), 2);
+
+		Service[] services = { service1, service2 };
+		QueuingNet net = new QueuingNet(Arrays.asList(services));
+
+		Job job1 = new Job(1, net);
+		Job job2 = new Job(1, net);
+
+		for (int i = 0; i < 2; i++) {
+			job1.request(service1);
+			job2.request(service1);
+			job1.request(service2);
+			job2.request(service2);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
 	public void testFixedBalancerWithRoundRobin() {
 		FixedBalancer balancer1 = new FixedBalancer("balance1", 2,
 				new RoundRobinBalancing(5), 2);
@@ -234,6 +274,8 @@ public class SimpleQNIntegrationTest extends TestCase {
 		Request reqJ1B2 = job1.request(balancer2);
 		Request reqJ2B1 = job2.request(balancer1);
 		Request reqJ2B2 = job2.request(balancer2);
+
+		net.close();
 
 		assertTrue(balancer1.services().head() == reqJ1B1.nextRequestInJob()
 				.get().service());
@@ -258,9 +300,13 @@ public class SimpleQNIntegrationTest extends TestCase {
 		assertEquals(17, job2.overallResidenceTime());
 		assertEquals(2, job2.overallWaitingTime());
 
+		net.open();
+
 		Job job3 = new Job(3, net);
 		Request reqJ3B1 = job3.request(balancer1);
 		Request reqJ3B2 = job3.request(balancer2);
+
+		net.close();
 
 		assertTrue(balancer1.services().head() == reqJ3B1.nextRequestInJob()
 				.get().service());
@@ -278,47 +324,24 @@ public class SimpleQNIntegrationTest extends TestCase {
 	@SuppressWarnings("unchecked")
 	public void testScalingBalancerWithRoundRobin() {
 		ScalingBalancer balancer1 = new ScalingBalancer("balance1", 2,
-				new RoundRobinBalancing(5), new AvgQueueLengthScaling(range(1,
-						5), 0, 1.9, 1.0));
-		ScalingBalancer balancer2 = new ScalingBalancer("balance2", 3,
-				new RoundRobinBalancing(5), new AvgQueueLengthScaling(range(1,
-						5), 0, 1.9, 1.0));
+				new RoundRobinBalancing(3), new AvgQueueLengthScaling(range(1,
+						25), 0, 0.3, 0));
+		ScalingBalancer balancer2 = new ScalingBalancer("balance2", 1,
+				new RoundRobinBalancing(3), new AvgQueueLengthScaling(range(1,
+						20), 0, 0.6, 0));
 
 		Service[] services = { balancer1, balancer2 };
 		QueuingNet net = new QueuingNet(Arrays.asList(services));
 
-		Job job1 = new Job(1, net);
-		Job job2 = new Job(2, net);
-		Job job3 = new Job(3, net);
-		Job job4 = new Job(4, net);
-		
-		job1.request(balancer1);
-		job1.request(balancer2);
-		job1.request(balancer1);
-		job1.request(balancer2);
-		job1.request(balancer1);
-		job1.request(balancer2);
-		
-		job2.request(balancer1);
-		job2.request(balancer2);
-		job2.request(balancer1);
-		job2.request(balancer2);
-		job2.request(balancer1);
-		job2.request(balancer2);
-		
-		job3.request(balancer1);
-		job3.request(balancer2);
-		job3.request(balancer1);
-		job3.request(balancer2);
-		job3.request(balancer1);
-		job3.request(balancer2);
-		
-		job4.request(balancer1);
-		job4.request(balancer2);
-		job4.request(balancer1);
-		job4.request(balancer2);
-		job4.request(balancer1);
-		job4.request(balancer2);
+		for (int i = 0; i < 100; i++) {
+			Job job1 = new Job(i, net);
+			job1.request(balancer1);
+			job1.request(balancer2);
+		}
+
+		net.close();
+		System.out.println(balancer1.services().size());
+		System.out.println(net.latestCompletingJob().overallWaitingTime());
 
 	}
 

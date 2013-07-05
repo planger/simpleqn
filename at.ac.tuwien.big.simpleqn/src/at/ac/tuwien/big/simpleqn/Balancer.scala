@@ -51,5 +51,9 @@ class Balancer(name: String, serviceTime: Int, val strategy: BalancingStrategy)
     assert(availServices contains service)
     service
   }
+  
+  def avgUtilizationOfContainedServices(range: Range) = {
+    (0.0 /: services) {_ + _.utilization(range) } / _services.length.toDouble
+  }
 
 }

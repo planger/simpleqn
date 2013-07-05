@@ -12,8 +12,12 @@ package at.ac.tuwien.big.simpleqn
 class Request(val job: Job, val service: Service, val serviceTime: Int) {
 
   def this(job: Job, service: Service) = this(job, service, service.serviceTime)
+  
+  var cachedPastResidenceTime = -1
+  var cachedWaitingTime = -1
 
   def net = job.net
+  def isClosed = net.isClosed
   def jobRequests = job.requests
   def index = jobRequests.indexOf(this)
   def previousIndex = index - 1
@@ -34,7 +38,7 @@ class Request(val job: Job, val service: Service, val serviceTime: Int) {
   }
 
   private def earlierOtherRequests() = {
-    val requests = service.requests
+    val requests = service.sortByArrivalTime(service.requests)
     requests.slice(0, requests.indexOf(this))
   }
 
@@ -47,8 +51,15 @@ class Request(val job: Job, val service: Service, val serviceTime: Int) {
   private def haveEarlierRequests = {
     !earlierOtherRequests.isEmpty
   }
+  
+  def waitingTime(): Int = {
+    if (!isClosed && cachedWaitingTime < 0) {
+      cachedWaitingTime = computeWaitingTime
+    }
+    cachedWaitingTime
+  }
 
-  def waitingTime: Int = {
+  def computeWaitingTime: Int = {
     if (earlierOtherRequests.length < 1) 0
     else {
       val time = (0 /: earlierOtherRequests) { (time, prevReq) =>
@@ -75,6 +86,13 @@ class Request(val job: Job, val service: Service, val serviceTime: Int) {
   }
 
   def pastResidenceTime(): Int = {
+    if (!isClosed && cachedPastResidenceTime < 0) {
+      cachedPastResidenceTime = computePastResidenceTime
+    }
+    cachedPastResidenceTime
+  }
+
+  private def computePastResidenceTime(): Int = {
     if (previousRequestInJob.isDefined) {
       val prevRequest = previousRequestInJob.get
       prevRequest.pastResidenceTime + prevRequest.waitingTime + prevRequest.serviceTime

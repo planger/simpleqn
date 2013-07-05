@@ -14,6 +14,19 @@ import scala.collection.JavaConversions
 
 class QueuingNet(val services: List[Service]) {
   
+  private var _closed = false
+  
+  def close() {
+    latestCompletingJob.completionTime
+    _closed = true
+  }
+  
+  def isClosed = _closed
+  
+  def open() {
+    _closed = false
+  }
+
   def this(serviceList: java.util.List[Service]) = {
     this(JavaConversions.asScalaBuffer(serviceList).toList)
   }
@@ -79,16 +92,28 @@ class QueuingNet(val services: List[Service]) {
   }
 
   private def debugPrintScale {
-    (0 to completionTime) foreach { i => print("|  " + i + "  ") }
+    (0 to completionTime) foreach { i => print("|     " + i + "     ") }
     println("|")
   }
 
   private def debugPrint(job: Job) {
-    (0 until job.arrivalTime) foreach { i => print("|" + ".." + i + "..") }
+    (0 until job.arrivalTime) foreach { i => print("|" + "..       ..") }
     (job.arrivalTime to completionTime) foreach { i =>
-      if (i >= job.completionTime) print("|.." + i + "..")
-      else if (job.waitingAt(i)) print("|w " + i + " w")
-      else if (job.processingAt(i)) print("|b " + i + " b")
+      
+      val fill = i.toString.replaceAll(".", " ")
+      val fillAll = fill + "        "
+      val service = job.serviceAt(i)
+      var serviceName = if (service.isDefined) { service.get.name } else { fillAll }
+      if (serviceName.length > fillAll.length) {
+        serviceName = serviceName.subSequence(serviceName.length - fillAll.length, serviceName.length).toString()
+      } else {
+        serviceName = serviceName + fillAll.substring(serviceName.length)
+      }
+      
+      if (i >= job.completionTime) print("|.." + fillAll)      
+      else if (job.waitingAt(i)) print("|w@" + serviceName)
+      else if (job.processingAt(i)) print("|b@" + serviceName)
+      
     }
     println("|")
   }

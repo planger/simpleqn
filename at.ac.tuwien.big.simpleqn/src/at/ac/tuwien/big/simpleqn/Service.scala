@@ -27,7 +27,7 @@ class Service(val name: String, val serviceTime: Int) {
   }
 
   def requests: List[Request] = {
-    sortByArrivalTime(_requests.toList)
+    _requests.toList
   }
 
   def requestsOf(job: Job) = {
@@ -51,8 +51,10 @@ class Service(val name: String, val serviceTime: Int) {
 
   def sortByArrivalTime(requestList: List[Request]) = {
     requestList sortWith { (r1, r2) =>
-      if (r1.arrivalTime != r2.arrivalTime) {
-        r1.arrivalTime < r2.arrivalTime
+      val r1ArrivalTime = r1.arrivalTime
+      val r2ArrivalTime = r2.arrivalTime
+      if (r1ArrivalTime != r2ArrivalTime) {
+        r1ArrivalTime < r2ArrivalTime
       } else {
         r1.job.arrivalTime < r2.job.arrivalTime
       }

@@ -16,11 +16,7 @@ import scala.collection.mutable.ListBuffer
 class Job(val arrivalTime: Int, val net: QueuingNet) {
   net.jobs += this
 
-  private val _requests = new ListBuffer[Request]
-
-  def requests() = {
-    _requests.toList
-  }
+  val requests = new ListBuffer[Request]
 
   private def totalValueOfRequests(value: Request => Int) = {
     (0 /: requests) { _ + value(_) }
@@ -36,7 +32,7 @@ class Job(val arrivalTime: Int, val net: QueuingNet) {
 
   def request(service: Service, serviceTime: Int) = {
     val request = new Request(this, service, serviceTime)
-    _requests += request
+    requests += request
     service.addRequest(request)
     request
   }
@@ -84,6 +80,18 @@ class Job(val arrivalTime: Int, val net: QueuingNet) {
 
   def completionTime = {
     latestLeavingRequest leavingServiceTime
+  }
+
+  def serviceAt(time: Int): Option[Service] = {
+    val request = requests.find {
+      request => request.waitingAt(time) || request.processingAt(time)
+    }
+    if (request.isDefined) {
+      val service = request.get.service
+      Option(service)
+    } else {
+      None
+    }
   }
 
 }
