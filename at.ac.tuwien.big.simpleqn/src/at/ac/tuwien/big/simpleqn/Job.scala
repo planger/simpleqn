@@ -16,7 +16,7 @@ import scala.collection.mutable.ListBuffer
 class Job(val arrivalTime: Int, val net: QueuingNet) {
   net.jobs += this
 
-  val requests = new ListBuffer[Request]
+  val requests = new MutableList[Request]
 
   private def totalValueOfRequests(value: Request => Int) = {
     (0 /: requests) { _ + value(_) }

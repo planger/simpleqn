@@ -88,7 +88,8 @@ class QueuingNet(val services: List[Service]) {
 
   def debugPrint {
     debugPrintScale
-    for (j <- jobs) { debugPrint(j) }
+    val allJobs = jobs.toList.sortBy(_.arrivalTime)
+    for (j <- allJobs) { debugPrint(j) }
   }
 
   private def debugPrintScale {
@@ -97,7 +98,11 @@ class QueuingNet(val services: List[Service]) {
   }
 
   private def debugPrint(job: Job) {
-    (0 until job.arrivalTime) foreach { i => print("|" + "..       ..") }
+    (0 until job.arrivalTime) foreach { i =>
+      val fill = i.toString.replaceAll(".", " ")
+      print("|" + ".." + fill + "      ..")
+    }
+    
     (job.arrivalTime to completionTime) foreach { i =>
       
       val fill = i.toString.replaceAll(".", " ")

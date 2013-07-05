@@ -17,6 +17,7 @@ import scala.actors.threadpool.Arrays;
 import scala.collection.immutable.Range;
 import at.ac.tuwien.big.simpleqn.strategies.AvgQueueLengthScaling;
 import at.ac.tuwien.big.simpleqn.strategies.RoundRobinBalancing;
+import at.ac.tuwien.big.simpleqn.strategies.ShortestQueueBalancing;;
 
 public class SimpleQNIntegrationTest extends TestCase {
 
@@ -40,12 +41,11 @@ public class SimpleQNIntegrationTest extends TestCase {
 		// The order in which requests are added within one job matters!
 		Request reqJob1Ser1 = job1.request(service1);
 		Request reqJob1Ser2 = job1.request(service2);
-		Request reqJob1Ser4 = job1.request(service4);
-
 		Request reqJob2Ser1 = job2.request(service1);
 		Request reqJob2Ser3 = job2.request(service3);
 		Request reqJob2Ser4 = job2.request(service4);
-
+		Request reqJob1Ser4 = job1.request(service4);
+		
 		// assert overall service time
 		assertEquals(7, job1.overallServiceTime());
 		assertEquals(8, job2.overallServiceTime());
@@ -96,10 +96,10 @@ public class SimpleQNIntegrationTest extends TestCase {
 		// assert arrival times
 		assertEquals(1, reqJob1Ser1.arrivalTime());
 		assertEquals(2, reqJob1Ser2.arrivalTime());
-		assertEquals(4, reqJob1Ser4.arrivalTime());
+		assertEquals(4, reqJob1Ser4.arrivalTime()); // 5
 		assertEquals(2, reqJob2Ser1.arrivalTime());
 		assertEquals(3, reqJob2Ser3.arrivalTime());
-		assertEquals(6, reqJob2Ser4.arrivalTime());
+		assertEquals(6, reqJob2Ser4.arrivalTime());  // 7
 
 		// assert leaving times
 		assertEquals(2, reqJob1Ser1.leavingServiceTime());
@@ -297,8 +297,8 @@ public class SimpleQNIntegrationTest extends TestCase {
 
 		assertEquals(15, job1.overallResidenceTime());
 		assertEquals(0, job1.overallWaitingTime());
-		assertEquals(17, job2.overallResidenceTime());
 		assertEquals(2, job2.overallWaitingTime());
+		assertEquals(17, job2.overallResidenceTime());
 
 		net.open();
 
@@ -323,25 +323,35 @@ public class SimpleQNIntegrationTest extends TestCase {
 
 	@SuppressWarnings("unchecked")
 	public void testScalingBalancerWithRoundRobin() {
-		ScalingBalancer balancer1 = new ScalingBalancer("balance1", 2,
-				new RoundRobinBalancing(3), new AvgQueueLengthScaling(range(1,
-						25), 0, 0.3, 0));
-		ScalingBalancer balancer2 = new ScalingBalancer("balance2", 1,
-				new RoundRobinBalancing(3), new AvgQueueLengthScaling(range(1,
-						20), 0, 0.6, 0));
+//		ScalingBalancer balancer1 = new ScalingBalancer("balance1", 1,
+//				new ShortestQueueBalancing(5), new AvgQueueLengthScaling(range(
+//						1, 1), 0, 0.5, 0));
+//		ScalingBalancer balancer2 = new ScalingBalancer("balance2", 1,
+//				new ShortestQueueBalancing(3), new AvgQueueLengthScaling(range(
+//						1, 1), 0, 0.9, 0));
+		
+		Service balancer1 = new Service("Service1", 1);
+		Service balancer2 = new Service("Service2", 1);
 
 		Service[] services = { balancer1, balancer2 };
 		QueuingNet net = new QueuingNet(Arrays.asList(services));
 
-		for (int i = 0; i < 100; i++) {
+		for (int i = 0; i < 5; i++) {
 			Job job1 = new Job(i, net);
 			job1.request(balancer1);
 			job1.request(balancer2);
+			Job job2 = new Job(i, net);
+			job2.request(balancer1);
+			job2.request(balancer2);
 		}
 
 		net.close();
-		System.out.println(balancer1.services().size());
-		System.out.println(net.latestCompletingJob().overallWaitingTime());
+		net.debugPrint();
+		
+//		System.out.println(balancer1.services().size());
+//		System.out.println(net.completionTime());
+//		System.out.println(net.completedJobs().size());
+//		System.out.println(net.throughput());
 
 	}
 
