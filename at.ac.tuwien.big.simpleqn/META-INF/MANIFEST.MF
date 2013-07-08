@@ -10,3 +10,4 @@ Export-Package: at.ac.tuwien.big.simpleqn,
 Require-Bundle: org.scala-ide.scala.library;bundle-version="2.10.1";visibility:=reexport,
  org.scala-ide.scala.compiler;bundle-version="2.10.1",
  org.junit;bundle-version="4.10.0"
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
