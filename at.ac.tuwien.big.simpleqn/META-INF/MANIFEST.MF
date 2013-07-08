@@ -1,0 +1,12 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Simpleqn
+Bundle-SymbolicName: at.ac.tuwien.big.simpleqn
+Bundle-Version: 1.0.0.qualifier
+Bundle-ClassPath: simpleqn.jar,
+ eclipse-juno/configuration/org.eclipse.osgi/bundles/2187/1/.cp/lib/scala-library.jar
+Export-Package: at.ac.tuwien.big.simpleqn,
+ at.ac.tuwien.big.simpleqn.strategies
+Require-Bundle: org.scala-ide.scala.library;bundle-version="2.10.1";visibility:=reexport,
+ org.scala-ide.scala.compiler;bundle-version="2.10.1",
+ org.junit;bundle-version="4.10.0"
