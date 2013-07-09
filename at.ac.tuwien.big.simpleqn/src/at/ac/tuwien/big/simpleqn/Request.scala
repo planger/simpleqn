@@ -19,24 +19,46 @@ class Request(val job: Job, val service: Service, val serviceTime: Int) {
   def net = job.net
   def isClosed = net.isClosed
   def jobRequests = job.requests
+  def index = job.requests.indexOf(this)
+  
+  def requestId() = {
+    job.jobId + "R[" + index + "]-" + this.hashCode()
+  }
+
+  def previousRequestsInJob = {
+    jobRequests.slice(0, index)
+  }
 
   def previousRequestInJob = {
     if (this != jobRequests.head)
-      Option(jobRequests(jobRequests.indexOf(this) - 1))
+      Option(jobRequests(index - 1))
     else
       None
   }
 
   def nextRequestInJob = {
     if (this != jobRequests.last)
-      Option(jobRequests(jobRequests.indexOf(this) + 1))
+      Option(jobRequests(index + 1))
     else
       None
   }
 
   private def earlierOtherRequest() = {
-    // TODO what if a request comes at the same time?
-    val earlierOtherRequests = service.requests.filter(r => r != this && r.arrivalTime <= arrivalTime)
+    // TODO fix stack overflow
+    val myArrivalTime = arrivalTime
+    val earlierOtherRequests = service.requests.filter {
+      r => r != this && isBefore(r, myArrivalTime)
+    }.sortWith { (r1, r2) =>
+      val r1ArrivalTime = r1.arrivalTime
+      val r2ArrivalTime = r2.arrivalTime
+      if (r1ArrivalTime < r2ArrivalTime) {
+        true
+      } else if (r1ArrivalTime == r2ArrivalTime) {
+        r1.hashCode() < r2.hashCode()
+      } else {
+        false
+      }
+    }
     if (!earlierOtherRequests.isEmpty) {
       Option(earlierOtherRequests.last)
     } else {
@@ -44,11 +66,18 @@ class Request(val job: Job, val service: Service, val serviceTime: Int) {
     }
   }
 
-  private def arrivalTimeDifference = {
-    val earlierOtherReq = earlierOtherRequest
-    if (earlierOtherReq.isDefined) {
-      arrivalTime - earlierOtherRequest.get.arrivalTime
-    } else 0
+  private def isBefore(otherRequest: Request, myArrivalTime: Int) = {
+    if (otherRequest.minArrivalTime <= myArrivalTime) {
+      val otherArrivalTime = otherRequest.arrivalTime
+      if (otherArrivalTime < myArrivalTime) {
+        true
+      } else if (otherArrivalTime == myArrivalTime) {
+        val isBefore = otherRequest.hashCode() < this.hashCode()
+        isBefore
+      } else {
+        false
+      }
+    } else false
   }
 
   def waitingTime(): Int = {
@@ -59,12 +88,18 @@ class Request(val job: Job, val service: Service, val serviceTime: Int) {
   }
 
   def computeWaitingTime: Int = {
-    val earlierOtherReq = earlierOtherRequest
-    if (earlierOtherReq.isEmpty) 0
-    else {
-      val time = earlierOtherRequest.get.waitingTime + earlierOtherRequest.get.serviceTime - arrivalTimeDifference
+    val otherReq = earlierOtherRequest
+    if (!otherReq.isEmpty) {
+      val time = otherReq.get.waitingTime + otherReq.get.serviceTime - arrivalTimeDifference
       if (time < 0) 0 else time
-    }
+    } else 0
+  }
+  
+  private def arrivalTimeDifference = {
+    val otherReq = earlierOtherRequest
+    if (otherReq.isDefined) {
+      arrivalTime - otherReq.get.arrivalTime
+    } else 0
   }
 
   def residenceTime = {
@@ -83,6 +118,16 @@ class Request(val job: Job, val service: Service, val serviceTime: Int) {
     arrivalTime + residenceTime
   }
 
+  def minArrivalTime = {
+    job.arrivalTime + pastServiceTime
+  }
+
+  def pastServiceTime = {
+    (0 /: previousRequestsInJob) {
+      _ + _.serviceTime
+    }
+  }
+
   def pastResidenceTime(): Int = {
     if (!isClosed || cachedPastResidenceTime < 0) {
       cachedPastResidenceTime = computePastResidenceTime
@@ -91,11 +136,9 @@ class Request(val job: Job, val service: Service, val serviceTime: Int) {
   }
 
   private def computePastResidenceTime(): Int = {
-    var pResTime = 0;
-    for (r <- job.requests.slice(0, job.requests.indexOf(this))) {
-      pResTime += r.residenceTime
+    (0 /: previousRequestsInJob) {
+      _ + _.residenceTime
     }
-    pResTime
   }
 
   def processingAt(time: Int) = {

@@ -228,12 +228,15 @@ public class SimpleQNIntegrationTest extends TestCase {
 		Job job1 = new Job(1, net);
 		Job job2 = new Job(1, net);
 
-		for (int i = 0; i < 2; i++) {
+		for (int i = 0; i < 4; i++) {
 			job1.request(service1);
-			job2.request(service1);
 			job1.request(service2);
+			job2.request(service1);
 			job2.request(service2);
 		}
+		net.close();
+		System.out.println("testMultipleRequestsToSameService");
+		net.debugPrint();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -249,12 +252,15 @@ public class SimpleQNIntegrationTest extends TestCase {
 		Job job1 = new Job(1, net);
 		Job job2 = new Job(1, net);
 
-		for (int i = 0; i < 2; i++) {
+		for (int i = 0; i < 4; i++) {
 			job1.request(service1);
-			job2.request(service1);
 			job1.request(service2);
+			job2.request(service1);
 			job2.request(service2);
 		}
+		net.close();
+		System.out.println("testMultipleRequestsToBalancingService");
+		net.debugPrint();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -336,7 +342,7 @@ public class SimpleQNIntegrationTest extends TestCase {
 		Service[] services = { balancer1, balancer2 };
 		QueuingNet net = new QueuingNet(Arrays.asList(services));
 
-		for (int i = 0; i < 5; i++) {
+		for (int i = 0; i < 10; i++) {
 			Job job1 = new Job(i, net);
 			job1.request(balancer1);
 			job1.request(balancer2);
@@ -346,6 +352,7 @@ public class SimpleQNIntegrationTest extends TestCase {
 		}
 
 		net.close();
+		System.out.println("testScalingBalancerWithRoundRobin");
 		net.debugPrint();
 		
 //		System.out.println(balancer1.services().size());

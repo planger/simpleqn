@@ -9,10 +9,10 @@
  */
 package at.ac.tuwien.big.simpleqn
 
-import scala.collection.mutable.MutableList
 import scala.reflect.internal.util.Collections
-import scala.collection.mutable.ListBuffer
 import scala.Immutable
+import scala.collection.mutable.SortedSet
+import scala.collection.mutable.ListBuffer
 
 class Service(val name: String, val serviceTime: Int) {
 
@@ -56,7 +56,7 @@ class Service(val name: String, val serviceTime: Int) {
       if (r1ArrivalTime != r2ArrivalTime) {
         r1ArrivalTime < r2ArrivalTime
       } else {
-        r1.job.arrivalTime < r2.job.arrivalTime
+        r1.hashCode < r2.hashCode
       }
     }
   }

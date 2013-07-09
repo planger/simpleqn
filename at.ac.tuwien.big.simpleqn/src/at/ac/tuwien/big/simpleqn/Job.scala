@@ -25,6 +25,10 @@ class Job(val arrivalTime: Int, val net: QueuingNet) {
   private def maxValueOfRequests(value: Request => Int) = {
     (0 /: requests) { (maxValue, request) => Math.max(maxValue, value(request)) }
   }
+  
+  def jobId() = {
+    "J" + hashCode + "(" + arrivalTime + ")"
+  }
 
   def request(service: Service): Request = {
     request(service, service.serviceTime)
