@@ -34,8 +34,9 @@ class Balancer(name: String, serviceTime: Int, val strategy: BalancingStrategy)
     services
   }
 
-  override def addRequest(request: Request) = {
-    super.addRequest(request)
+  //override 
+  def addRequest(request: Request) = {
+    //super.addRequest(request)
     forwardRequest(request)
   }
 

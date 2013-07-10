@@ -11,27 +11,22 @@ package at.ac.tuwien.big.simpleqn
 
 import scala.reflect.internal.util.Collections
 import scala.Immutable
-import scala.collection.mutable.SortedSet
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable
 
 class Service(val name: String, val serviceTime: Int) {
 
-  private val _requests = new ListBuffer[Request]
+  protected[simpleqn] val queue = mutable.ListBuffer[Request]()
   
   private def countIf(bool: Boolean) = {
     if (bool) 1 else 0
   }
-
-  protected[simpleqn] def addRequest(request: Request) {
-    _requests += request
-  }
-
-  def requests: List[Request] = {
-    _requests.toList
+  
+  def requests = {
+    queue toList
   }
 
   def requestsOf(job: Job) = {
-    requests filter (job == _.job)
+    queue filter (job == _.job)
   }
 
   def jobQueueAt(time: Int) = {
@@ -39,26 +34,13 @@ class Service(val name: String, val serviceTime: Int) {
   }
 
   def requestQueueAt(time: Int): List[Request] = {
-    val queueAtTime = requests filter { request =>
+    queue filter { request =>
       time >= request.arrivalTime && time < request.leavingQueueTime
-    }
-    sortByArrivalTime(queueAtTime)
+    } toList
   }
 
   def requestQueueLengthAt(time: Int) = {
     requestQueueAt(time).length
-  }
-
-  def sortByArrivalTime(requestList: List[Request]) = {
-    requestList sortWith { (r1, r2) =>
-      val r1ArrivalTime = r1.arrivalTime
-      val r2ArrivalTime = r2.arrivalTime
-      if (r1ArrivalTime != r2ArrivalTime) {
-        r1ArrivalTime < r2ArrivalTime
-      } else {
-        r1.hashCode < r2.hashCode
-      }
-    }
   }
 
   def avgQueueLength(range: Range) = {
@@ -70,7 +52,7 @@ class Service(val name: String, val serviceTime: Int) {
   }
 
   def busyAt(time: Int) = {
-    requests exists { _.processingAt(time) }
+    queue exists { _.processingAt(time) }
   }
 
   def busyTime(range: Range) = {

@@ -16,6 +16,8 @@ import scala.collection.mutable.ListBuffer
 class Job(val arrivalTime: Int, val net: QueuingNet) {
   net.jobs += this
 
+  protected[simpleqn] var currentArrivalTime = arrivalTime
+  
   val requests = new MutableList[Request]
 
   private def totalValueOfRequests(value: Request => Int) = {
@@ -37,7 +39,6 @@ class Job(val arrivalTime: Int, val net: QueuingNet) {
   def request(service: Service, serviceTime: Int) = {
     val request = new Request(this, service, serviceTime)
     requests += request
-    service.addRequest(request)
     request
   }
 
@@ -74,7 +75,7 @@ class Job(val arrivalTime: Int, val net: QueuingNet) {
   }
 
   def latestLeavingRequest = {
-    requests.foldLeft(requests.head) { (latestRequest, currentRequest) =>
+    (requests.head /: requests) { (latestRequest, currentRequest) =>
       if (latestRequest.leavingServiceTime >= currentRequest.leavingServiceTime)
         latestRequest
       else
@@ -87,14 +88,18 @@ class Job(val arrivalTime: Int, val net: QueuingNet) {
   }
 
   def serviceAt(time: Int): Option[Service] = {
-    val request = requests.find {
-      request => request.waitingAt(time) || request.processingAt(time)
-    }
+    val request = activeRequestAt(time)
     if (request.isDefined) {
       val service = request.get.service
       Option(service)
     } else {
       None
+    }
+  }
+  
+  def activeRequestAt(time: Int) = {
+    requests.find {
+      request => request.waitingAt(time) || request.processingAt(time)
     }
   }
 

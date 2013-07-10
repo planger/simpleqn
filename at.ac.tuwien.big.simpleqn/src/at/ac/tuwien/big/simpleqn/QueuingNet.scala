@@ -14,27 +14,27 @@ import scala.collection.JavaConversions
 
 class QueuingNet(val services: List[Service]) {
   
-  private var _closed = false
+  private var _isComputationDone = false
   
-  def close() {
-    latestCompletingJob.completionTime
-    _closed = true
+  protected[simpleqn] val jobs = new mutable.HashSet[Job]
+  
+  def sortedJobs = {
+    jobs.toList.sortBy(_.arrivalTime)
   }
   
-  def isClosed = _closed
+  def close() {
+    new QueuingNetSolver(services, sortedJobs).solve
+    _isComputationDone = true
+  }
+  
+  def isClosed = _isComputationDone
   
   def open() {
-    _closed = false
+    _isComputationDone = false
   }
 
   def this(serviceList: java.util.List[Service]) = {
     this(JavaConversions.asScalaBuffer(serviceList).toList)
-  }
-
-  protected[simpleqn] val jobs = new mutable.HashSet[Job]
-
-  private def countIf(bool: Boolean) = {
-    if (bool) 1 else 0
   }
 
   def latestCompletingJob = {
@@ -54,6 +54,10 @@ class QueuingNet(val services: List[Service]) {
     (0 /: range) { (busyTime, time) =>
       busyTime + countIf(services.exists(_.busyAt(time)))
     }
+  }
+    
+  private def countIf(bool: Boolean) = {
+    if (bool) 1 else 0
   }
 
   def completedJobs: List[Job] = {
@@ -88,8 +92,7 @@ class QueuingNet(val services: List[Service]) {
 
   def debugPrint {
     debugPrintScale
-    val allJobs = jobs.toList.sortBy(_.arrivalTime)
-    for (j <- allJobs) { debugPrint(j) }
+    for (j <- sortedJobs) { debugPrint(j) }
   }
 
   private def debugPrintScale {
