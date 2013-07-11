@@ -17,8 +17,8 @@ abstract class ScalingStrategy(val numberOfServices: Range, val startUpTime: Int
   
   var balancer: ScalingBalancer = null
   
-  def shouldScaleOut(request: Request, services: List[Service]): Boolean
+  def shouldScaleOut(currentTime: Int, request: Request, services: List[Service]): Boolean
 
-  def shouldScaleIn(request: Request, services: List[Service]): Boolean
+  def shouldScaleIn(currentTime: Int, request: Request, services: List[Service]): Boolean
 
 }

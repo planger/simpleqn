@@ -16,7 +16,7 @@ import at.ac.tuwien.big.simpleqn.Service
 class ShortestQueueBalancing(subServiceTime: Int) extends BalancingStrategy(subServiceTime) {
 
   def selectService(request: Request, services: List[Service]) = {
-    val time = request.arrivalTime
+    val time = request.leavingQueueTime
     var bestService = services.head
     var shortestQueueLength = bestService.requestQueueLengthAt(time)
     for (currentService <- services) {

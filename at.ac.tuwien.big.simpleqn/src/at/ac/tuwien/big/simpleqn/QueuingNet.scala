@@ -70,7 +70,7 @@ class QueuingNet(val services: List[Service]) {
   }
 
   def completedJobs: List[Job] = {
-    completedJobs(0 until completionTime)
+    completedJobs(completeRange)
   }
 
   def completedJobs(toTime: Int): List[Job] = {
@@ -88,7 +88,7 @@ class QueuingNet(val services: List[Service]) {
   }
 
   def utilization: Double = {
-    utilization(0 until completionTime)
+    utilization(completeRange)
   }
 
   def throughput(range: Range): Double = {
@@ -96,7 +96,7 @@ class QueuingNet(val services: List[Service]) {
   }
 
   def throughput: Double = {
-    throughput(0 until completionTime)
+    throughput(completeRange)
   }
 
   def jobCategories = {
@@ -109,6 +109,10 @@ class QueuingNet(val services: List[Service]) {
   
   def estimatedLongRunRange = {
     (firstStartingJob.arrivalTime to latestCompletingJob.arrivalTime)
+  }
+  
+  def completeRange = {
+    (0 to completionTime)
   }
 
   def minWaitingTimeOfJobCategory(categoryName: String) = {

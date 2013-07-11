@@ -16,6 +16,7 @@ protected class QueuingNetSolver(val jobs: List[Job]) {
 
   var currentArrivalTime = (Int.MaxValue /: jobs) { (curMin, job) => Math.min(curMin, job.arrivalTime) }
   var requestStack = mutable.ListBuffer[Request]()
+  var processedRequests = mutable.ListBuffer[Request]()
 
   def solve = {
     initializeRequestStack
@@ -34,7 +35,7 @@ protected class QueuingNetSolver(val jobs: List[Job]) {
         request.computeLeavingQueueTime
         updateArrivalOfNextRequest(request)
         updateCurrentArrivalTimeInJob(request)
-        setProcessed(request)
+        updateRequestStack(request)
       }
       updateCurrentArrivalTime
     }
@@ -69,15 +70,26 @@ protected class QueuingNetSolver(val jobs: List[Job]) {
     if (nextRequest.isDefined)
       nextRequest.get.myArrivalTime = request.leavingServiceTime
   }
-  
+
   private def updateCurrentArrivalTimeInJob(request: Request) {
     request.job.currentArrivalTime = request.leavingServiceTime
   }
 
+  private def updateRequestStack(request: Request) {
+    setProcessed(request)
+    addNextRequestInJobIfNew(request)
+  }
+
   private def setProcessed(request: Request) {
     requestStack -= request
+    processedRequests += request
   }
-  
+
+  private def addNextRequestInJobIfNew(request: Request) {
+    val diff = allRequests.diff(requestStack.union(processedRequests))
+    requestStack ++= diff
+  }
+
   private def updateCurrentArrivalTime {
     currentArrivalTime = minCurrentArrivalTimeOfIncompleteJob
   }

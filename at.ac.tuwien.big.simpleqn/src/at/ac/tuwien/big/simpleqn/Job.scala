@@ -37,8 +37,10 @@ class Job(val arrivalTime: Int, val categoryName: String, val net: QueuingNet) {
 
   protected[simpleqn] def requestAfter(service: Service, serviceTime: Int, request: Request) = {
     val newRequest = new Request(this, service, serviceTime)
-    if (request == null || request == requests.last) requests += newRequest
-    else requests.insert(requests.indexOf(request) + 1, newRequest)
+    if (request == null || request == requests.last)
+      requests += newRequest
+    else
+      requests.insert(requests.indexOf(request) + 1, newRequest)
     newRequest
   }
 

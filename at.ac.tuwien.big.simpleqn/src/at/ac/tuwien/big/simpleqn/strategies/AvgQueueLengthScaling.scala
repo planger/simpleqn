@@ -15,12 +15,14 @@ import at.ac.tuwien.big.simpleqn.Request
 class AvgQueueLengthScaling(numberOfServices: Range, startUpTime: Int, val scaleOutThreshold: Double, val scaleInThreshold: Double)
   extends ScalingStrategy(numberOfServices, startUpTime) {
 
-  override def shouldScaleOut(request: Request, services: List[Service]) = {
-    scaleOutThreshold < avgQueueLength(request.arrivalTime, services)
+  override def shouldScaleOut(currentTime: Int, request: Request, services: List[Service]) = {
+    println("avgQueueLength is " + avgQueueLength(currentTime, services) + " at " + currentTime)
+    println(services(0).requestQueueAt(currentTime))
+    scaleOutThreshold < avgQueueLength(currentTime, services)
   }
 
-  override def shouldScaleIn(request: Request, services: List[Service]) = {
-    scaleInThreshold > avgQueueLength(request.arrivalTime, services)
+  override def shouldScaleIn(currentTime: Int, request: Request, services: List[Service]) = {
+    scaleInThreshold > avgQueueLength(currentTime, services)
   }
 
   private def avgQueueLength(currentTime: Int, services: List[Service]) = {

@@ -19,7 +19,7 @@ class ScaledServiceNode(name: String, serviceTime: Int, val availableFrom: Int)
   }
   
   def isActive(time: Int) = {
-    availableFrom <= time && time <= availableTo
+    availableFrom <= time && time < availableTo
   }
   
   def existenceRange = {

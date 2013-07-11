@@ -31,21 +31,22 @@ class ScalingBalancer(name: String, serviceTime: Int, balancingStrategy: Balanci
   }
 
   override def addToQueue(request: Request) {
-    val currentTime = request.leavingQueueTime
+    val previousRequestInQueue = if (requests.isEmpty) None else Option(requests.last)
+    val currentTime = request.computeLeavingQueueTime(previousRequestInQueue)
     val availServices = availableServices(currentTime)
-    if (shouldScaleOut(request, availServices))
+    if (shouldScaleOut(currentTime, request, availServices))
       scaleOut(currentTime)
-    if (shouldScaleIn(request, availServices))
+    if (shouldScaleIn(currentTime, request, availServices))
       scaleIn(currentTime, serviceToScaleIn(availServices))
     super.addToQueue(request)
   }
 
-  private def shouldScaleOut(request: Request, availServices: List[Service]) = {
-    scalingStrategy.shouldScaleOut(request, availServices) && availServices.size + 1 < scalingStrategy.numberOfServices.end
+  private def shouldScaleOut(currentTime: Int, request: Request, availServices: List[Service]) = {
+    scalingStrategy.shouldScaleOut(currentTime, request, availServices) && availServices.size + 1 < scalingStrategy.numberOfServices.end
   }
 
-  private def shouldScaleIn(request: Request, availServices: List[Service]) = {
-    scalingStrategy.shouldScaleIn(request, availServices) && availServices.size > scalingStrategy.numberOfServices.start
+  private def shouldScaleIn(currentTime: Int, request: Request, availServices: List[Service]) = {
+    scalingStrategy.shouldScaleIn(currentTime, request, availServices) && availServices.size > scalingStrategy.numberOfServices.start
   }
 
   def serviceToScaleIn(services: List[Service]) = {
@@ -59,6 +60,7 @@ class ScalingBalancer(name: String, serviceTime: Int, balancingStrategy: Balanci
   }
 
   private def scaleOut(currentTime: Int) {
+    println("scaling out at " + currentTime + " for service " + name + " (will be available at " + (currentTime + scalingStrategy.startUpTime) + ")")
     addService(currentTime + scalingStrategy.startUpTime)
   }
 

@@ -59,11 +59,14 @@ class Request(val job: Job, val service: Service, val serviceTime: Int) {
   }
 
   protected[simpleqn] def computeLeavingQueueTime {
-    val previousRequest = previousRequestInServiceQueue
-    if (previousRequest.isDefined)
-      myLeavingQueueTime = Math.max(previousRequest.get.leavingServiceTime, arrivalTime)
-    else
-      myLeavingQueueTime = arrivalTime
+    myLeavingQueueTime = computeLeavingQueueTime(previousRequestInServiceQueue)
+  }
+  
+  protected[simpleqn] def computeLeavingQueueTime(previousRequest: Option[Request]) = {
+	  if (previousRequest.isDefined)
+		  Math.max(previousRequest.get.leavingServiceTime, arrivalTime)
+		  else
+			  arrivalTime
   }
   
   def leavingQueueTime = {
