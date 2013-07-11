@@ -12,7 +12,7 @@ package at.ac.tuwien.big.simpleqn
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
-protected class QueuingNetSolver(val services: List[Service], val jobs: List[Job]) {
+protected class QueuingNetSolver(val jobs: List[Job]) {
 
   var currentArrivalTime = (Int.MaxValue /: jobs) { (curMin, job) => Math.min(curMin, job.arrivalTime) }
   var requestStack = mutable.ListBuffer[Request]()
@@ -30,7 +30,7 @@ protected class QueuingNetSolver(val services: List[Service], val jobs: List[Job
   private def processRequests {
     while (haveRequestsToProcess) {
       for (request <- requestsOfCurrentArrivalTime) {
-        request.service.queue += request
+        request.service.addToQueue(request)
         request.computeLeavingQueueTime
         updateArrivalOfNextRequest(request)
         updateCurrentArrivalTimeInJob(request)
