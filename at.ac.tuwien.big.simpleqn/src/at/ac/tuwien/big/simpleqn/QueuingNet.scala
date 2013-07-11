@@ -23,7 +23,7 @@ class QueuingNet(val services: List[Service]) {
   }
 
   def close() {
-    new QueuingNetSolver(services, sortedJobs).solve
+    new QueuingNetSolver(sortedJobs).solve
     _isComputationDone = true
   }
 
@@ -146,7 +146,7 @@ class QueuingNet(val services: List[Service]) {
     }
   }
 
-  private def foldOverJobCategoryValue(categoryName: String, foldStart: Double)(fold: (Double, Job) => Double) {
+  private def foldOverJobCategoryValue(categoryName: String, foldStart: Double)(fold: (Double, Job) => Double) = {
     val jobsOfCategory = jobsByCategory.get(categoryName).getOrElse(Set[Job]())
     (foldStart /: jobsOfCategory) { (foldValue, job) =>
       fold(foldValue, job)
