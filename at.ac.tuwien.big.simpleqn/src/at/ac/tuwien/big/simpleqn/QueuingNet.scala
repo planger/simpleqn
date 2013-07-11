@@ -36,6 +36,15 @@ class QueuingNet(val services: List[Service]) {
   def this(serviceList: java.util.List[Service]) = {
     this(JavaConversions.asScalaBuffer(serviceList).toList)
   }
+  
+  def firstStartingJob = {
+    jobs.foldLeft(jobs.head) { (firstJob, currentJob) =>
+      if (firstJob.arrivalTime < currentJob.arrivalTime)
+        firstJob
+      else
+        currentJob
+    }
+  }
 
   def latestCompletingJob = {
     jobs.foldLeft(jobs.head) { (latestJob, currentJob) =>
@@ -96,6 +105,10 @@ class QueuingNet(val services: List[Service]) {
 
   private def jobsByCategory = {
     jobs.groupBy { _.categoryName }
+  }
+  
+  def estimatedLongRunRange = {
+    (firstStartingJob.arrivalTime to latestCompletingJob.arrivalTime)
   }
 
   def minWaitingTimeOfJobCategory(categoryName: String) = {

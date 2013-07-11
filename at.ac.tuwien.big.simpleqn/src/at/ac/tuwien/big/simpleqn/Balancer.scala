@@ -34,16 +34,15 @@ class Balancer(name: String, serviceTime: Int, val strategy: BalancingStrategy)
     services
   }
 
-  //override 
-  def addRequest(request: Request) = {
-    //super.addRequest(request)
+  override def addToQueue(request: Request) {
+    super.addToQueue(request)
     forwardRequest(request)
   }
 
   private def forwardRequest(request: Request) = {
     val service = selectedService(request)
     val subServiceTime = strategy.subServiceTime(request)
-    request.job.request(service, subServiceTime)
+    request.job.requestAfter(service, subServiceTime, request)
   }
 
   private def selectedService(request: Request) = {

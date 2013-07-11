@@ -15,6 +15,7 @@ import java.util.List;
 import junit.framework.TestCase;
 import scala.actors.threadpool.Arrays;
 import scala.collection.immutable.Range;
+import scala.collection.immutable.Range.Inclusive;
 import at.ac.tuwien.big.simpleqn.strategies.RoundRobinBalancing;
 
 public class SimpleQNIntegrationTest extends TestCase {
@@ -43,9 +44,9 @@ public class SimpleQNIntegrationTest extends TestCase {
 		Request reqJob2Ser3 = job2.request(service3);
 		Request reqJob2Ser4 = job2.request(service4);
 		Request reqJob1Ser4 = job1.request(service4);
-		
+
 		net.close();
-		
+
 		// assert overall service time
 		assertEquals(7, job1.overallServiceTime());
 		assertEquals(8, job2.overallServiceTime());
@@ -99,7 +100,7 @@ public class SimpleQNIntegrationTest extends TestCase {
 		assertEquals(4, reqJob1Ser4.arrivalTime()); // 5
 		assertEquals(2, reqJob2Ser1.arrivalTime());
 		assertEquals(3, reqJob2Ser3.arrivalTime());
-		assertEquals(6, reqJob2Ser4.arrivalTime());  // 7
+		assertEquals(6, reqJob2Ser4.arrivalTime()); // 7
 
 		// assert leaving times
 		assertEquals(2, reqJob1Ser1.leavingServiceTime());
@@ -182,7 +183,7 @@ public class SimpleQNIntegrationTest extends TestCase {
 		Request reqJob3Service2 = job3.request(service2, 5);
 		Request reqJob4Service1 = job4.request(service1);
 		Request reqJob4Service2 = job4.request(service2, 4);
-		
+
 		net.close();
 
 		assertEquals(2, reqJob2Service1.waitingTime());
@@ -237,8 +238,6 @@ public class SimpleQNIntegrationTest extends TestCase {
 			job2.request(service2);
 		}
 		net.close();
-		System.out.println("testMultipleRequestsToSameService");
-		net.debugPrint();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -261,12 +260,10 @@ public class SimpleQNIntegrationTest extends TestCase {
 			job2.request(service2);
 		}
 		net.close();
-		System.out.println("testMultipleRequestsToBalancingService");
-		net.debugPrint();
 	}
 
 	@SuppressWarnings("unchecked")
-	public void notestFixedBalancerWithRoundRobin() {
+	public void testFixedBalancerWithRoundRobin() {
 		FixedBalancer balancer1 = new FixedBalancer("balance1", 2,
 				new RoundRobinBalancing(5), 2);
 		FixedBalancer balancer2 = new FixedBalancer("balance2", 3,
@@ -284,6 +281,7 @@ public class SimpleQNIntegrationTest extends TestCase {
 		Request reqJ2B2 = job2.request(balancer2);
 
 		net.close();
+		net.debugPrint();
 
 		assertTrue(balancer1.services().head() == reqJ1B1.nextRequestInJob()
 				.get().service());
@@ -331,26 +329,26 @@ public class SimpleQNIntegrationTest extends TestCase {
 
 	@SuppressWarnings("unchecked")
 	public void testScalingBalancerWithRoundRobin() {
-//		ScalingBalancer balancer1 = new ScalingBalancer("balance1", 1,
-//				new ShortestQueueBalancing(5), new AvgQueueLengthScaling(range(
-//						1, 1), 0, 0.5, 0));
-//		ScalingBalancer balancer2 = new ScalingBalancer("balance2", 1,
-//				new ShortestQueueBalancing(3), new AvgQueueLengthScaling(range(
-//						1, 1), 0, 0.9, 0));
-		
-		Service balancer1 = new Service("Service1", 1);
-		Service balancer2 = new Service("Service2", 1);
+		// ScalingBalancer balancer1 = new ScalingBalancer("balance1", 1,
+		// new ShortestQueueBalancing(5), new AvgQueueLengthScaling(range(
+		// 1, 1), 0, 0.5, 0));
+		// ScalingBalancer balancer2 = new ScalingBalancer("balance2", 1,
+		// new ShortestQueueBalancing(3), new AvgQueueLengthScaling(range(
+		// 1, 1), 0, 0.9, 0));
 
-		Service[] services = { balancer1, balancer2 };
+		Service service1 = new Service("Service1", 1);
+		Service service2 = new Service("Service2", 1);
+
+		Service[] services = { service1, service2 };
 		QueuingNet net = new QueuingNet(Arrays.asList(services));
 
 		for (int i = 0; i < 30; i++) {
 			Job job1 = new Job(i, net);
-			job1.request(balancer1);
-			job1.request(balancer2);
+			job1.request(service1);
+			job1.request(service2);
 			Job job2 = new Job(i, net);
-			job2.request(balancer1);
-			job2.request(balancer2);
+			job2.request(service1);
+			job2.request(service2);
 		}
 
 		net.close();
@@ -359,12 +357,50 @@ public class SimpleQNIntegrationTest extends TestCase {
 		System.out.println(net.completionTime());
 		System.out.println(net.throughput());
 		System.out.println(net.completedJobs().size());
-		
-//		System.out.println(balancer1.services().size());
-//		System.out.println(net.completionTime());
-//		System.out.println(net.completedJobs().size());
-//		System.out.println(net.throughput());
 
+		// System.out.println(balancer1.services().size());
+		// System.out.println(net.completionTime());
+		// System.out.println(net.completedJobs().size());
+		// System.out.println(net.throughput());
+
+	}
+
+	@SuppressWarnings("unchecked")
+	public void testAnalysisWithFourServices() {
+		Service service1 = new Service("Service1", 1);
+		Service service2 = new Service("Service2", 3);
+		Service service3 = new Service("Service3", 1);
+		Service service4 = new Service("Service4", 1);
+
+		Service[] services = { service1, service2, service3, service4 };
+		QueuingNet net = new QueuingNet(Arrays.asList(services));
+
+		for (int i = 1; i < 101; i++) {
+			int arrivalTime = i;
+			Job job1 = new Job(arrivalTime, net);
+			job1.request(service1);
+			job1.request(service2);
+			job1.request(service4);
+			Job job2 = new Job(arrivalTime, net);
+			job2.request(service1);
+			job2.request(service3);
+			job2.request(service4);
+		}
+
+		net.close();
+		System.out.println("testAnalysisWithFourServices");
+		System.out.println("Overall results");
+		System.out.println("Completion Time=" + net.completionTime());
+		System.out.println("Throughput=" + net.throughput());
+		System.out.println("Utilization=" + net.utilization());
+		System.out.println();
+		for (Service service : services) {
+			System.out.println(service.name() + " results");
+			Inclusive estimatedLongRunRange = net.estimatedLongRunRange();
+			System.out.println("utilization="
+					+ service.utilization(estimatedLongRunRange));
+			System.out.println();
+		}
 	}
 
 }

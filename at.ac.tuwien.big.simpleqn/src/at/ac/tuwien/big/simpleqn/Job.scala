@@ -21,7 +21,7 @@ class Job(val arrivalTime: Int, val categoryName: String, val net: QueuingNet) {
 
   protected[simpleqn] var currentArrivalTime = arrivalTime
 
-  val requests = new MutableList[Request]
+  val requests = new ListBuffer[Request]
 
   def jobId() = {
     "J" + hashCode + "(" + arrivalTime + ")"
@@ -32,9 +32,14 @@ class Job(val arrivalTime: Int, val categoryName: String, val net: QueuingNet) {
   }
 
   def request(service: Service, serviceTime: Int) = {
-    val request = new Request(this, service, serviceTime)
-    requests += request
-    request
+    requestAfter(service, serviceTime, null)
+  }
+
+  protected[simpleqn] def requestAfter(service: Service, serviceTime: Int, request: Request) = {
+    val newRequest = new Request(this, service, serviceTime)
+    if (request == null || request == requests.last) requests += newRequest
+    else requests.insert(requests.indexOf(request) + 1, newRequest)
+    newRequest
   }
 
   def waitingAt(time: Int) = {
@@ -44,7 +49,7 @@ class Job(val arrivalTime: Int, val categoryName: String, val net: QueuingNet) {
   def processingAt(time: Int) = {
     requests.exists { _.processingAt(time) }
   }
-  
+
   private def totalValueOfRequests(value: Request => Int) = {
     (0 /: requests) { _ + value(_) }
   }
@@ -52,7 +57,7 @@ class Job(val arrivalTime: Int, val categoryName: String, val net: QueuingNet) {
   private def maxValueOfRequests(value: Request => Int) = {
     (0 /: requests) { (maxValue, request) => Math.max(maxValue, value(request)) }
   }
-  
+
   private def minValueOfRequests(value: Request => Int) = {
     (0 /: requests) { (maxValue, request) => Math.min(maxValue, value(request)) }
   }
@@ -68,7 +73,7 @@ class Job(val arrivalTime: Int, val categoryName: String, val net: QueuingNet) {
   def maxServiceTime = {
     maxValueOfRequests { _.serviceTime }
   }
-  
+
   def minServiceTime = {
     minValueOfRequests { _.serviceTime }
   }
@@ -84,7 +89,7 @@ class Job(val arrivalTime: Int, val categoryName: String, val net: QueuingNet) {
   def maxResidenceTime = {
     maxValueOfRequests { _.residenceTime }
   }
-  
+
   def minResidenceTime = {
     minValueOfRequests { _.residenceTime }
   }
@@ -100,7 +105,7 @@ class Job(val arrivalTime: Int, val categoryName: String, val net: QueuingNet) {
   def maxWaitingTime = {
     maxValueOfRequests { _.waitingTime }
   }
-  
+
   def minWaitingTime = {
     minValueOfRequests { _.waitingTime }
   }

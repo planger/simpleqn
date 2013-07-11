@@ -43,17 +43,17 @@ class Request(val job: Job, val service: Service, val serviceTime: Int) {
   }
 
   def previousRequestInServiceQueue = {
-    val indexInQueue = service.queue.indexOf(this)
+    val indexInQueue = service.requests.indexOf(this)
     if (indexInQueue > 0)
-      Option(service.queue(indexInQueue - 1))
+      Option(service.requests(indexInQueue - 1))
     else
       None
   }
   
   def nextRequestInServiceQueue = {
-    val indexInQueue = service.queue.indexOf(this)
-    if (service.queue.size - 1 > indexInQueue)
-      Option(service.queue(indexInQueue + 1))
+    val indexInQueue = service.requests.indexOf(this)
+    if (service.requests.size - 1 > indexInQueue)
+      Option(service.requests(indexInQueue + 1))
     else
       None
   }

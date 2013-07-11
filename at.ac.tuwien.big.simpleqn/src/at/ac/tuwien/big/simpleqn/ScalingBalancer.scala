@@ -30,14 +30,14 @@ class ScalingBalancer(name: String, serviceTime: Int, balancingStrategy: Balanci
     }
   }
 
-  override def addRequest(request: Request) = {
+  override def addToQueue(request: Request) {
     val currentTime = request.leavingQueueTime
     val availServices = availableServices(currentTime)
     if (shouldScaleOut(request, availServices))
       scaleOut(currentTime)
     if (shouldScaleIn(request, availServices))
       scaleIn(currentTime, serviceToScaleIn(availServices))
-    super.addRequest(request)
+    super.addToQueue(request)
   }
 
   private def shouldScaleOut(request: Request, availServices: List[Service]) = {
