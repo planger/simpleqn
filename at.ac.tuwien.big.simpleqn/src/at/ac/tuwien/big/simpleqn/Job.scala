@@ -13,21 +13,16 @@ import scala.collection.mutable.HashSet
 import scala.collection.mutable.MutableList
 import scala.collection.mutable.ListBuffer
 
-class Job(val arrivalTime: Int, val net: QueuingNet) {
+class Job(val arrivalTime: Int, val categoryName: String, val net: QueuingNet) {
+
+  def this(arrivalTime: Int, net: QueuingNet) = this(arrivalTime, "", net)
+
   net.jobs += this
 
   protected[simpleqn] var currentArrivalTime = arrivalTime
-  
+
   val requests = new MutableList[Request]
 
-  private def totalValueOfRequests(value: Request => Int) = {
-    (0 /: requests) { _ + value(_) }
-  }
-
-  private def maxValueOfRequests(value: Request => Int) = {
-    (0 /: requests) { (maxValue, request) => Math.max(maxValue, value(request)) }
-  }
-  
   def jobId() = {
     "J" + hashCode + "(" + arrivalTime + ")"
   }
@@ -49,17 +44,53 @@ class Job(val arrivalTime: Int, val net: QueuingNet) {
   def processingAt(time: Int) = {
     requests.exists { _.processingAt(time) }
   }
+  
+  private def totalValueOfRequests(value: Request => Int) = {
+    (0 /: requests) { _ + value(_) }
+  }
+
+  private def maxValueOfRequests(value: Request => Int) = {
+    (0 /: requests) { (maxValue, request) => Math.max(maxValue, value(request)) }
+  }
+  
+  private def minValueOfRequests(value: Request => Int) = {
+    (0 /: requests) { (maxValue, request) => Math.min(maxValue, value(request)) }
+  }
 
   def overallServiceTime: Int = {
     totalValueOfRequests { _.serviceTime }
   }
 
-  def overallWaitingTime = {
-    totalValueOfRequests { _.waitingTime }
+  def averageServiceTime = {
+    overallServiceTime / requests.size.toDouble
+  }
+
+  def maxServiceTime = {
+    maxValueOfRequests { _.serviceTime }
+  }
+  
+  def minServiceTime = {
+    minValueOfRequests { _.serviceTime }
   }
 
   def overallResidenceTime = {
     overallServiceTime + overallWaitingTime
+  }
+
+  def averageResidenceTime = {
+    overallResidenceTime / requests.size.toDouble
+  }
+
+  def maxResidenceTime = {
+    maxValueOfRequests { _.residenceTime }
+  }
+  
+  def minResidenceTime = {
+    minValueOfRequests { _.residenceTime }
+  }
+
+  def overallWaitingTime = {
+    totalValueOfRequests { _.waitingTime }
   }
 
   def averageWaitingTime = {
@@ -68,6 +99,10 @@ class Job(val arrivalTime: Int, val net: QueuingNet) {
 
   def maxWaitingTime = {
     maxValueOfRequests { _.waitingTime }
+  }
+  
+  def minWaitingTime = {
+    minValueOfRequests { _.waitingTime }
   }
 
   def arrivedBefore(time: Int) = {
@@ -96,7 +131,7 @@ class Job(val arrivalTime: Int, val net: QueuingNet) {
       None
     }
   }
-  
+
   def activeRequestAt(time: Int) = {
     requests.find {
       request => request.waitingAt(time) || request.processingAt(time)

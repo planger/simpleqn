@@ -13,22 +13,22 @@ import scala.collection.mutable
 import scala.collection.JavaConversions
 
 class QueuingNet(val services: List[Service]) {
-  
+
   private var _isComputationDone = false
-  
+
   protected[simpleqn] val jobs = new mutable.HashSet[Job]
-  
+
   def sortedJobs = {
     jobs.toList.sortBy(_.arrivalTime)
   }
-  
+
   def close() {
     new QueuingNetSolver(services, sortedJobs).solve
     _isComputationDone = true
   }
-  
+
   def isClosed = _isComputationDone
-  
+
   def open() {
     _isComputationDone = false
   }
@@ -55,7 +55,7 @@ class QueuingNet(val services: List[Service]) {
       busyTime + countIf(services.exists(_.busyAt(time)))
     }
   }
-    
+
   private def countIf(bool: Boolean) = {
     if (bool) 1 else 0
   }
@@ -90,6 +90,77 @@ class QueuingNet(val services: List[Service]) {
     throughput(0 until completionTime)
   }
 
+  def jobCategories = {
+    jobsByCategory.keySet
+  }
+
+  private def jobsByCategory = {
+    jobs.groupBy { _.categoryName }
+  }
+
+  def minWaitingTimeOfJobCategory(categoryName: String) = {
+    minOfJobCategoryValue(categoryName) { _.averageWaitingTime }
+  }
+
+  def maxWaitingTimeOfJobCategory(categoryName: String) = {
+    maxOfJobCategoryValue(categoryName) { _.averageWaitingTime }
+  }
+
+  def averageWaitingTimeOfJobCategory(categoryName: String) = {
+    averageOfJobCategoryValue(categoryName) { _.averageWaitingTime }
+  }
+
+  def averageResidenceTimeOfJobCategory(categoryName: String) = {
+    averageOfJobCategoryValue(categoryName) { _.averageResidenceTime }
+  }
+  
+  def minResidenceTimeOfJobCategory(categoryName: String) = {
+    minOfJobCategoryValue(categoryName) { _.averageResidenceTime }
+  }
+  
+  def maxResidenceTimeOfJobCategory(categoryName: String) = {
+    maxOfJobCategoryValue(categoryName) { _.averageResidenceTime }
+  }
+
+  def averageServiceTimeOfJobCategory(categoryName: String) = {
+    averageOfJobCategoryValue(categoryName) { _.averageServiceTime }
+  }
+  
+  def minServiceTimeOfJobCategory(categoryName: String) = {
+    minOfJobCategoryValue(categoryName) { _.averageServiceTime }
+  }
+  
+  def maxServiceTimeOfJobCategory(categoryName: String) = {
+    maxOfJobCategoryValue(categoryName) { _.averageServiceTime }
+  }
+
+  private def maxOfJobCategoryValue(categoryName: String)(value: Job => Double) = {
+    foldOverJobCategoryValue(categoryName, Double.MinValue) { (curMax, job) =>
+      Math.max(curMax, value(job))
+    }
+  }
+
+  private def minOfJobCategoryValue(categoryName: String)(value: Job => Double) = {
+    foldOverJobCategoryValue(categoryName, Double.MaxValue) { (curMin, job) =>
+      Math.min(curMin, value(job))
+    }
+  }
+
+  private def foldOverJobCategoryValue(categoryName: String, foldStart: Double)(fold: (Double, Job) => Double) {
+    val jobsOfCategory = jobsByCategory.get(categoryName).getOrElse(Set[Job]())
+    (foldStart /: jobsOfCategory) { (foldValue, job) =>
+      fold(foldValue, job)
+    }
+  }
+
+  private def averageOfJobCategoryValue(categoryName: String)(value: Job => Double) = {
+    val jobsOfCategory = jobsByCategory.get(categoryName).getOrElse(Set[Job]())
+    val sum = (0.0 /: jobsOfCategory) { (avg, job) =>
+      avg + value(job)
+    }
+    if (sum > 0) sum / jobsOfCategory.size.toDouble else 0
+  }
+
   def debugPrint {
     debugPrintScale
     for (j <- sortedJobs) { debugPrint(j) }
@@ -105,9 +176,9 @@ class QueuingNet(val services: List[Service]) {
       val fill = i.toString.replaceAll(".", " ")
       print("|" + ".." + fill + "      ..")
     }
-    
+
     (job.arrivalTime to completionTime) foreach { i =>
-      
+
       val fill = i.toString.replaceAll(".", " ")
       val fillAll = fill + "        "
       val service = job.serviceAt(i)
@@ -117,11 +188,11 @@ class QueuingNet(val services: List[Service]) {
       } else {
         serviceName = serviceName + fillAll.substring(serviceName.length)
       }
-      
-      if (i >= job.completionTime) print("|.." + fillAll)      
+
+      if (i >= job.completionTime) print("|.." + fillAll)
       else if (job.waitingAt(i)) print("|w@" + serviceName)
       else if (job.processingAt(i)) print("|b@" + serviceName)
-      
+
     }
     println("|")
   }

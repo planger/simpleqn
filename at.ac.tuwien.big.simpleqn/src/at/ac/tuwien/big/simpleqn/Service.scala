@@ -21,6 +21,10 @@ class Service(val name: String, val serviceTime: Int) {
     if (bool) 1 else 0
   }
   
+  private def completionTime = {
+    if (!requests.isEmpty) requests(0).net.completionTime else 0
+  }
+  
   def requests = {
     queue toList
   }
@@ -43,10 +47,18 @@ class Service(val name: String, val serviceTime: Int) {
     requestQueueAt(time).length
   }
 
+  def avgQueueLength: Double = {
+    avgQueueLength(0 to completionTime)
+  }
+  
   def avgQueueLength(range: Range) = {
     (0 /: range) { _ + requestQueueLengthAt(_) } / range.length.toDouble
   }
 
+  def maxQueueLength: Int = {
+    maxQueueLength(0 to completionTime)
+  }
+  
   def maxQueueLength(range: Range) = {
     (0 /: range) { (max, time) => Math.max(max, requestQueueLengthAt(time)) }
   }
@@ -55,14 +67,26 @@ class Service(val name: String, val serviceTime: Int) {
     queue exists { _.processingAt(time) }
   }
 
+  def busyTime: Int = {
+    busyTime(0 to completionTime)
+  }
+  
   def busyTime(range: Range) = {
     (0 /: range) { (busyTime, time) => busyTime + countIf(busyAt(time)) }
   }
 
+  def idleTime: Int = {
+    idleTime(0 to completionTime)
+  }
+  
   def idleTime(range: Range) = {
     range.length - busyTime(range)
   }
 
+  def utilization: Double = {
+    utilization(0 to completionTime)
+  }
+  
   def utilization(range: Range): Double = {
     busyTime(range) / range.length.toDouble
   }
