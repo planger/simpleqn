@@ -159,7 +159,7 @@ public class SimpleQNIntegrationTest extends TestCase {
 		assertEquals(2, net.completedJobs().size());
 		assertEquals(1, net.completedJobs(8).size());
 		assertEquals(0, net.completedJobs(7).size());
-		assertEquals(2d / 12d, net.throughput());
+		assertEquals(2d / 13d, net.throughput());
 	}
 
 	public void testJobDependentServiceTime() {
@@ -328,7 +328,7 @@ public class SimpleQNIntegrationTest extends TestCase {
 	public void testScalingBalancerWithRoundRobin() {
 		ScalingBalancer service1 = new ScalingBalancer("balance1", 1,
 				new ShortestQueueBalancing(5), new AvgQueueLengthScaling(range(
-						1, 3), 2, 0.5, 0));
+						1, 3), 0, 0.5, 0));
 		ScalingBalancer service2 = new ScalingBalancer("balance2", 1,
 				new ShortestQueueBalancing(3), new AvgQueueLengthScaling(range(
 						1, 3), 0, 0.9, 0));
@@ -360,24 +360,27 @@ public class SimpleQNIntegrationTest extends TestCase {
 	}
 
 	@SuppressWarnings("unchecked")
-	public void testAnalysisWithFourServices() {
-		Service service1 = new Service("Service1", 1);
-		Service service2 = new Service("Service2", 3);
-		Service service3 = new Service("Service3", 1);
-		Service service4 = new Service("Service4", 1);
+	public void notestAnalysisWithFourServices() {
+		Service service1 = new Service("Service1", 1000);
+		Service service2 = new Service("Service2", 1000);
+		Service service3 = new Service("Service3", 1000);
+		Service service4 = new Service("Service4", 1000);
 
 		Service[] services = { service1, service2, service3, service4 };
 		QueuingNet net = new QueuingNet(Arrays.asList(services));
 
-		for (int i = 1; i < 101; i++) {
-			int arrivalTime = i;
-			Job job1 = new Job(arrivalTime, net);
+		int arrivalTime1 = 0;
+		int arrivalTime2 = 0;
+		for (int i = 1; i < 200; i++) { // 51000?
+			arrivalTime1 += exp(0.001);
+			arrivalTime2 += exp(0.001);
+			Job job1 = new Job(arrivalTime1, net);
 			job1.request(service1);
-			job1.request(service2);
+			job1.request(service2, exp(0.001));
 			job1.request(service4);
-			Job job2 = new Job(arrivalTime, net);
+			Job job2 = new Job(arrivalTime2, net);
 			job2.request(service1);
-			job2.request(service3);
+			job2.request(service3, exp(0.002)); // 0.001
 			job2.request(service4);
 		}
 
@@ -385,7 +388,7 @@ public class SimpleQNIntegrationTest extends TestCase {
 		System.out.println("testAnalysisWithFourServices");
 		System.out.println("Overall results");
 		System.out.println("Completion Time=" + net.completionTime());
-		System.out.println("Throughput=" + net.throughput());
+		System.out.println("Throughput/s=" + net.throughput() * 1000);
 		System.out.println("Utilization=" + net.utilization());
 		System.out.println();
 		for (Service service : services) {
@@ -395,6 +398,10 @@ public class SimpleQNIntegrationTest extends TestCase {
 					+ service.utilization(estimatedLongRunRange));
 			System.out.println();
 		}
+	}
+	
+	private int exp(double lamdba) {
+		return (int) (Math.log(1-Math.random())/(-lamdba));
 	}
 
 }
