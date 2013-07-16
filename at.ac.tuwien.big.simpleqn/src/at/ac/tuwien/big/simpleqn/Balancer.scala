@@ -13,7 +13,7 @@ import scala.collection.mutable.ListBuffer
 
 import at.ac.tuwien.big.simpleqn.strategies.BalancingStrategy
 
-class Balancer(name: String, serviceTime: Int, val strategy: BalancingStrategy)
+class Balancer(override val name: String, override val serviceTime: Int, val strategy: BalancingStrategy)
   extends Service(name, serviceTime) {
 
   private val _services = new ListBuffer[Service]
