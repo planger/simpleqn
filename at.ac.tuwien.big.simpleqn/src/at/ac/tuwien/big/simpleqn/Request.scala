@@ -20,8 +20,12 @@ class Request(val job: Job, val service: Service, val serviceTime: Int) {
   def jobRequests = job.requests
   def indexInJob = job.requests.indexOf(this)
 
+  override def toString = {
+    requestId
+  }
+
   def requestId() = {
-    job.jobId + "R[" + indexInJob + "]-" + this.hashCode()
+    job.jobId + "R[" + indexInJob + "]@" + service.name + "-" + this.hashCode()
   }
 
   def previousRequestsInJob = {
@@ -49,7 +53,7 @@ class Request(val job: Job, val service: Service, val serviceTime: Int) {
     else
       None
   }
-  
+
   def nextRequestInServiceQueue = {
     val indexInQueue = service.requests.indexOf(this)
     if (service.requests.size - 1 > indexInQueue)
@@ -61,14 +65,14 @@ class Request(val job: Job, val service: Service, val serviceTime: Int) {
   protected[simpleqn] def computeLeavingQueueTime {
     myLeavingQueueTime = computeLeavingQueueTime(previousRequestInServiceQueue)
   }
-  
+
   protected[simpleqn] def computeLeavingQueueTime(previousRequest: Option[Request]) = {
-	  if (previousRequest.isDefined)
-		  Math.max(previousRequest.get.leavingServiceTime, arrivalTime)
-		  else
-			  arrivalTime
+    if (previousRequest.isDefined)
+      Math.max(previousRequest.get.leavingServiceTime, arrivalTime)
+    else
+      arrivalTime
   }
-  
+
   def leavingQueueTime = {
     myLeavingQueueTime
   }
