@@ -14,10 +14,6 @@ import at.ac.tuwien.big.simpleqn.Service
 
 abstract class BalancingStrategy(val balancingServiceTime: Int) {
 
-  def balancingServiceTime(request: Request): Int = {
-    balancingServiceTime
-  }
-
   def selectService(request: Request, services: List[Service]): Service
 
 }

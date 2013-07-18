@@ -42,7 +42,6 @@ class Balancer(override val name: String, override val serviceTime: Int, val str
 
   protected def forwardRequest(request: Request) = {
     val service = selectedService(request)
-    val subServiceTime = strategy.balancingServiceTime(request)
     request.job.requestAfter(service, request.serviceTime, request)
   }
 
