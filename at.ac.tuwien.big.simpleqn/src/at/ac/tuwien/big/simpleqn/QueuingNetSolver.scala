@@ -31,8 +31,8 @@ protected class QueuingNetSolver(val jobs: List[Job]) {
   private def processRequests {
     while (haveRequestsToProcess) {
       for (request <- requestsOfCurrentArrivalTime) {
+        println("Processing request " + request + " arriving at " + request.arrivalTime)
         request.service.addToQueue(request)
-        request.computeLeavingQueueTime
         updateArrivalOfNextRequest(request)
         updateCurrentArrivalTimeInJob(request)
         updateRequestStack(request)

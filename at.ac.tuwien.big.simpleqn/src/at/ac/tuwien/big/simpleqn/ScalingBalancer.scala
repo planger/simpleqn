@@ -15,7 +15,7 @@ import scala.util.Random
 import at.ac.tuwien.big.simpleqn.strategies.BalancingStrategy
 import at.ac.tuwien.big.simpleqn.strategies.ScalingStrategy
 
-class ScalingBalancer(name: String, serviceTime: Int, balancingStrategy: BalancingStrategy, scalingStrategy: ScalingStrategy)
+class ScalingBalancer(override val name: String, override val serviceTime: Int, val balancingStrategy: BalancingStrategy, val scalingStrategy: ScalingStrategy)
   extends Balancer(name, serviceTime, balancingStrategy) {
 
   scalingStrategy.balancer = this
@@ -31,14 +31,8 @@ class ScalingBalancer(name: String, serviceTime: Int, balancingStrategy: Balanci
   }
 
   override def addToQueue(request: Request) {
-    val previousRequestInQueue = if (requests.isEmpty) None else Option(requests.last)
-    val currentTime = request.computeLeavingQueueTime(previousRequestInQueue)
-    val availServices = availableServices(currentTime)
-    if (shouldScaleOut(currentTime, request, availServices))
-      scaleOut(currentTime)
-    if (shouldScaleIn(currentTime, request, availServices))
-      scaleIn(currentTime, serviceToScaleIn(availServices))
     super.addToQueue(request)
+    checkScaling(request.leavingQueueTime, request)
   }
 
   private def shouldScaleOut(currentTime: Int, request: Request, availServices: List[Service]) = {
@@ -71,6 +65,15 @@ class ScalingBalancer(name: String, serviceTime: Int, balancingStrategy: Balanci
 
   private def nextServiceId = {
     name + "_" + (services.length + 1).toString
+  }
+
+  def checkScaling(currentTime: Int, request: Request) {
+    val availServices = availableServices(currentTime)
+    if (shouldScaleOut(currentTime, request, availServices)) {
+      scaleOut(currentTime)
+    }
+    if (shouldScaleIn(currentTime, request, availServices))
+      scaleIn(currentTime, serviceToScaleIn(availServices))
   }
 
 }

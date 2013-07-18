@@ -36,7 +36,7 @@ class QueuingNet(val services: List[Service]) {
   def this(serviceList: java.util.List[Service]) = {
     this(JavaConversions.asScalaBuffer(serviceList).toList)
   }
-  
+
   def firstStartingJob = {
     jobs.foldLeft(jobs.head) { (firstJob, currentJob) =>
       if (firstJob.arrivalTime < currentJob.arrivalTime)
@@ -106,11 +106,16 @@ class QueuingNet(val services: List[Service]) {
   private def jobsByCategory = {
     jobs.groupBy { _.categoryName }
   }
-  
+
   def estimatedLongRunRange = {
-    (firstStartingJob.arrivalTime to latestCompletingJob.arrivalTime)
+    val firstJobArrivalTime = firstStartingJob.arrivalTime
+    val lastJob = latestCompletingJob
+    if (firstJobArrivalTime < lastJob.arrivalTime)
+      (firstJobArrivalTime to lastJob.arrivalTime)
+    else
+      (firstJobArrivalTime to lastJob.completionTime)
   }
-  
+
   def completeRange = {
     (0 to completionTime)
   }
@@ -130,11 +135,11 @@ class QueuingNet(val services: List[Service]) {
   def averageResidenceTimeOfJobCategory(categoryName: String) = {
     averageOfJobCategoryValue(categoryName) { _.averageResidenceTime }
   }
-  
+
   def minResidenceTimeOfJobCategory(categoryName: String) = {
     minOfJobCategoryValue(categoryName) { _.averageResidenceTime }
   }
-  
+
   def maxResidenceTimeOfJobCategory(categoryName: String) = {
     maxOfJobCategoryValue(categoryName) { _.averageResidenceTime }
   }
@@ -142,11 +147,11 @@ class QueuingNet(val services: List[Service]) {
   def averageServiceTimeOfJobCategory(categoryName: String) = {
     averageOfJobCategoryValue(categoryName) { _.averageServiceTime }
   }
-  
+
   def minServiceTimeOfJobCategory(categoryName: String) = {
     minOfJobCategoryValue(categoryName) { _.averageServiceTime }
   }
-  
+
   def maxServiceTimeOfJobCategory(categoryName: String) = {
     maxOfJobCategoryValue(categoryName) { _.averageServiceTime }
   }

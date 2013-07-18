@@ -36,7 +36,6 @@ class Balancer(override val name: String, override val serviceTime: Int, val str
 
   override def addToQueue(request: Request) {
     super.addToQueue(request)
-    request.computeLeavingQueueTime
     forwardRequest(request)
   }
 

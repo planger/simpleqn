@@ -31,6 +31,7 @@ class Service(val name: String, val serviceTime: Int) {
 
   def addToQueue(request: Request) {
     queue += request
+    request.computeLeavingQueueTime
   }
 
   def requests = {
