@@ -53,7 +53,7 @@ class Balancer(override val name: String, override val serviceTime: Int, val str
   }
   
   override def busyAt(time: Int) = {
-    super.busyAt(time) || _services.exists(_.busyAt(time))
+    super.busyAt(time)
   }
   
   def avgUtilizationOfContainedServices(range: Range) = {
