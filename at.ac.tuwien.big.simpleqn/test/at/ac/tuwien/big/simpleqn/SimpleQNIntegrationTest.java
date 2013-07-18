@@ -15,7 +15,6 @@ import java.util.List;
 import junit.framework.TestCase;
 import scala.actors.threadpool.Arrays;
 import scala.collection.immutable.Range;
-import scala.collection.immutable.Range.Inclusive;
 import at.ac.tuwien.big.simpleqn.strategies.AvgQueueLengthScaling;
 import at.ac.tuwien.big.simpleqn.strategies.RoundRobinBalancing;
 import at.ac.tuwien.big.simpleqn.strategies.ShortestQueueBalancing;
