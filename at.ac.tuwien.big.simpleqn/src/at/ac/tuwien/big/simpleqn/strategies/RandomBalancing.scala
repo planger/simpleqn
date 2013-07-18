@@ -14,7 +14,7 @@ import scala.collection.immutable.List
 import at.ac.tuwien.big.simpleqn.Service
 import scala.util.Random
 
-class RandomBalancing(subServiceTime: Int) extends BalancingStrategy(subServiceTime) {
+class RandomBalancing(override val balancingServiceTime: Int) extends BalancingStrategy(balancingServiceTime) {
 
   def selectService(request: Request, services: List[Service]) = {
     services(Random.nextInt(services.length))

@@ -13,7 +13,7 @@ import at.ac.tuwien.big.simpleqn.Request
 import scala.collection.immutable.List
 import at.ac.tuwien.big.simpleqn.Service
 
-class RoundRobinBalancing(subServiceTime: Int) extends BalancingStrategy(subServiceTime) {
+class RoundRobinBalancing(override val balancingServiceTime: Int) extends BalancingStrategy(balancingServiceTime) {
 
   var prevService: Service = null
 

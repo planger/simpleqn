@@ -243,10 +243,10 @@ public class SimpleQNIntegrationTest extends TestCase {
 
 	@SuppressWarnings("unchecked")
 	public void testMultipleRequestsToBalancingService() {
-		FixedBalancer service1 = new FixedBalancer("balance1", 2,
-				new RoundRobinBalancing(5), 2);
-		FixedBalancer service2 = new FixedBalancer("balance2", 2,
-				new RoundRobinBalancing(5), 2);
+		FixedBalancer service1 = new FixedBalancer("balance1", 5,
+				new RoundRobinBalancing(2), 2);
+		FixedBalancer service2 = new FixedBalancer("balance2", 5,
+				new RoundRobinBalancing(2), 2);
 
 		Service[] services = { service1, service2 };
 		QueuingNet net = new QueuingNet(Arrays.asList(services));
@@ -289,10 +289,10 @@ public class SimpleQNIntegrationTest extends TestCase {
 
 	@SuppressWarnings("unchecked")
 	public void testFixedBalancerWithRoundRobin() {
-		FixedBalancer balancer1 = new FixedBalancer("balance1", 2,
-				new RoundRobinBalancing(5), 2);
-		FixedBalancer balancer2 = new FixedBalancer("balance2", 3,
-				new RoundRobinBalancing(5), 2);
+		FixedBalancer balancer1 = new FixedBalancer("balance1", 5,
+				new RoundRobinBalancing(2), 2);
+		FixedBalancer balancer2 = new FixedBalancer("balance2", 5,
+				new RoundRobinBalancing(3), 2);
 
 		Service[] services = { balancer1, balancer2 };
 		QueuingNet net = new QueuingNet(Arrays.asList(services));
