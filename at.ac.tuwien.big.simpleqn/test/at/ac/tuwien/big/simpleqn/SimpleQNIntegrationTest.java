@@ -243,10 +243,10 @@ public class SimpleQNIntegrationTest extends TestCase {
 	}
 
 	@SuppressWarnings("unchecked")
-	public void notestMultipleRequestsToBalancingService() {
+	public void testMultipleRequestsToBalancingService() {
 		FixedBalancer service1 = new FixedBalancer("balance1", 2,
 				new RoundRobinBalancing(5), 2);
-		FixedBalancer service2 = new FixedBalancer("balance2", 3,
+		FixedBalancer service2 = new FixedBalancer("balance2", 2,
 				new RoundRobinBalancing(5), 2);
 
 		Service[] services = { service1, service2 };
@@ -255,13 +255,37 @@ public class SimpleQNIntegrationTest extends TestCase {
 		Job job1 = new Job(1, net);
 		Job job2 = new Job(1, net);
 
-		for (int i = 0; i < 3; i++) {
+		for (int i = 0; i < 4; i++) {
 			job1.request(service1);
 			job1.request(service2);
 			job2.request(service1);
 			job2.request(service2);
 		}
 		net.close();
+
+		Service service1_1 = service1.services().apply(0);
+		Service service1_2 = service1.services().apply(1);
+		Service service2_1 = service2.services().apply(0);
+		Service service2_2 = service2.services().apply(1);
+
+		assertEquals(0.3333333333333333d,
+				service1_1.utilization(net.completeRange()));
+		assertEquals(0.3333333333333333d,
+				service1_2.utilization(net.completeRange()));
+		assertEquals(0.3333333333333333d,
+				service2_1.utilization(net.completeRange()));
+		assertEquals(0.3333333333333333d,
+				service2_2.utilization(net.completeRange()));
+
+		assertEquals(20, service1_1.busyTime());
+		assertEquals(20, service1_2.busyTime());
+		assertEquals(20, service2_1.busyTime());
+		assertEquals(20, service2_2.busyTime());
+		
+		assertEquals(40, service1_1.idleTime());
+		assertEquals(40, service1_2.idleTime());
+		assertEquals(40, service2_1.idleTime());
+		assertEquals(40, service2_2.idleTime());
 	}
 
 	@SuppressWarnings("unchecked")
@@ -399,9 +423,9 @@ public class SimpleQNIntegrationTest extends TestCase {
 			System.out.println();
 		}
 	}
-	
+
 	private int exp(double lamdba) {
-		return (int) (Math.log(1-Math.random())/(-lamdba));
+		return (int) (Math.log(1 - Math.random()) / (-lamdba));
 	}
 
 }
