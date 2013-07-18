@@ -256,8 +256,8 @@ public class SimpleQNIntegrationTest extends TestCase {
 
 		for (int i = 0; i < 4; i++) {
 			job1.request(service1);
-			job1.request(service2);
-			job2.request(service1);
+			job1.request(service2, 5);
+			job2.request(service1, 5);
 			job2.request(service2);
 		}
 		net.close();
