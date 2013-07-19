@@ -242,7 +242,7 @@ public class SimpleQNIntegrationTest extends TestCase {
 	}
 
 	@SuppressWarnings("unchecked")
-	public void testMultipleRequestsToBalancingService() {
+	public void testMultipleRequestsToBalancer() {
 		FixedBalancer service1 = new FixedBalancer("balance1", 5,
 				new RoundRobinBalancing(2), 2);
 		FixedBalancer service2 = new FixedBalancer("balance2", 5,
@@ -349,23 +349,25 @@ public class SimpleQNIntegrationTest extends TestCase {
 
 	@SuppressWarnings("unchecked")
 	public void testScalingBalancerWithRoundRobin() {
-		ScalingBalancer service1 = new ScalingBalancer("balance1", 1,
-				new ShortestQueueBalancing(5), new AvgQueueLengthScaling(range(
-						1, 3), 0, 0.5, 0));
-		ScalingBalancer service2 = new ScalingBalancer("balance2", 1,
-				new ShortestQueueBalancing(3), new AvgQueueLengthScaling(range(
-						1, 3), 0, 0.9, 0));
+		ScalingBalancer service1 = new ScalingBalancer("balance1", 3,
+				new ShortestQueueBalancing(1), new AvgQueueLengthScaling(range(
+						1, 3), 0, 3, 1.1));
+		ScalingBalancer service2 = new ScalingBalancer("balance2", 3,
+				new ShortestQueueBalancing(1), new AvgQueueLengthScaling(range(
+						1, 3), 0, 3, 1.1));
 
 		Service[] services = { service1, service2 };
 		QueuingNet net = new QueuingNet(Arrays.asList(services));
 
-		for (int i = 0; i < 10; i++) {
+		for (int i = 0; i < 20; i++) {
 			Job job1 = new Job(i, net);
 			job1.request(service1);
-			job1.request(service2);
+			if (i < 10) job1.request(service2);
+			if (i < 10) job1.request(service2);
+			if (i < 10) job1.request(service2);
 			Job job2 = new Job(i, net);
 			job2.request(service1);
-			job2.request(service2);
+			//if (i > 15) job2.request(service2);
 		}
 
 		net.close();

@@ -34,6 +34,10 @@ class Service(val name: String, val serviceTime: Int) {
     request.computeLeavingQueueTime
   }
 
+  def notifyProcessing(request: Request) {}
+  
+  def notifyEndOfSimulation {}
+
   def requests = {
     queue toList
   }

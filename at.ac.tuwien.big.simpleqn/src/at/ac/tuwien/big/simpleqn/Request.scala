@@ -9,7 +9,7 @@
  */
 package at.ac.tuwien.big.simpleqn
 
-class Request(val job: Job, val service: Service, var serviceTime: Int) {
+class Request(val job: Job, var service: Service, var serviceTime: Int) {
 
   def this(job: Job, service: Service) = this(job, service, service.serviceTime)
 

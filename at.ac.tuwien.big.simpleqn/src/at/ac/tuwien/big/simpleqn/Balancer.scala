@@ -16,6 +16,8 @@ import at.ac.tuwien.big.simpleqn.strategies.BalancingStrategy
 class Balancer(override val name: String, override val serviceTime: Int, val strategy: BalancingStrategy)
   extends Service(name, serviceTime) {
 
+  private val placeHolder = new Service(name + "place", serviceTime)
+
   private val _services = new ListBuffer[Service]
 
   def addService(service: Service) {
@@ -36,13 +38,22 @@ class Balancer(override val name: String, override val serviceTime: Int, val str
 
   override def addToQueue(request: Request) {
     super.addToQueue(request)
-    forwardRequest(request)
+    forwardRequestToPlaceHolder(request)
+  }
+
+  protected def forwardRequestToPlaceHolder(request: Request) = {
+    request.job.requestAfter(placeHolder, request.serviceTime, request)
     request.serviceTime = strategy.balancingServiceTime
   }
 
-  protected def forwardRequest(request: Request) = {
-    val service = selectedService(request)
-    request.job.requestAfter(service, request.serviceTime, request)
+  override def notifyProcessing(request: Request) {
+    moveToSelectedService(request)
+  }
+
+  protected def moveToSelectedService(request: Request) = {
+    if (request.nextRequestInJob.isDefined) {
+      request.nextRequestInJob.get.service = selectedService(request)
+    }
   }
 
   private def selectedService(request: Request) = {
@@ -51,9 +62,14 @@ class Balancer(override val name: String, override val serviceTime: Int, val str
     assert(availServices contains service)
     service
   }
-  
+
+  private def unsetArrivalTimeOfNextRequest(request: Request) {
+    val nextRequest = request.nextRequestInJob
+    if (nextRequest.isDefined) nextRequest.get.myArrivalTime = -1
+  }
+
   def avgUtilizationOfContainedServices(range: Range) = {
-    (0.0 /: services) {_ + _.utilization(range) } / _services.length.toDouble
+    (0.0 /: services) { _ + _.utilization(range) } / _services.length.toDouble
   }
 
 }

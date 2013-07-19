@@ -16,8 +16,6 @@ class AvgQueueLengthScaling(numberOfServices: Range, startUpTime: Int, val scale
   extends ScalingStrategy(numberOfServices, startUpTime) {
 
   override def shouldScaleOut(currentTime: Int, request: Request, services: List[Service]) = {
-    println("avgQueueLength is " + avgQueueLength(currentTime, services) + " at " + currentTime)
-    println(services(0).requestQueueAt(currentTime))
     scaleOutThreshold < avgQueueLength(currentTime, services)
   }
 

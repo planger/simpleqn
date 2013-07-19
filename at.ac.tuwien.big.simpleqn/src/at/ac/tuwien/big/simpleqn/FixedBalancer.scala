@@ -15,7 +15,7 @@ class FixedBalancer(name: String, serviceTime: Int, strategy: BalancingStrategy,
   extends Balancer(name, serviceTime, strategy) {
 
   for (i <- 1 to numberOfServices) {
-    addService(new ScaledServiceNode(name + "_" + i, serviceTime))
+    addService(new ScaledServiceNode(name + "_" + i, serviceTime, this))
   }
 
 }

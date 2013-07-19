@@ -30,9 +30,13 @@ class ScalingBalancer(override val name: String, override val serviceTime: Int, 
     }
   }
 
-  override def addToQueue(request: Request) {
-    super.addToQueue(request)
+  override def notifyProcessing(request: Request) {
     checkScaling(request.leavingQueueTime, request)
+    super.notifyProcessing(request)
+  }
+
+  override def notifyEndOfSimulation {
+
   }
 
   private def shouldScaleOut(currentTime: Int, request: Request, availServices: List[Service]) = {
@@ -47,19 +51,20 @@ class ScalingBalancer(override val name: String, override val serviceTime: Int, 
     services(Random.nextInt(services.length))
   }
 
-  private def scaleIn(time: Int, service: Service) {
+  private def scaleIn(currentTime: Int, service: Service) {
+    println("Scale in " + service.name + " at " + currentTime)
     service match {
-      case node: ScaledServiceNode => node.availableTo = time
+      case node: ScaledServiceNode => node.availableTo = currentTime
     }
   }
 
   private def scaleOut(currentTime: Int) {
-    println("scaling out at " + currentTime + " for service " + name + " (will be available at " + (currentTime + scalingStrategy.startUpTime) + ")")
+    println("Scale out " + name + " at " + currentTime)
     addService(currentTime + scalingStrategy.startUpTime)
   }
 
   private def addService(availableFrom: Int) {
-    val newService = new ScaledServiceNode(nextServiceId, serviceTime, availableFrom)
+    val newService = new ScaledServiceNode(nextServiceId, serviceTime, this, availableFrom)
     addService(newService)
   }
 
@@ -67,13 +72,20 @@ class ScalingBalancer(override val name: String, override val serviceTime: Int, 
     name + "_" + (services.length + 1).toString
   }
 
-  def checkScaling(currentTime: Int, request: Request) {
+  private def checkScaling(currentTime: Int, request: Request) {
     val availServices = availableServices(currentTime)
-    if (shouldScaleOut(currentTime, request, availServices)) {
-      scaleOut(currentTime)
-    }
+    checkScaleIn(currentTime, request, availServices)
+    checkScaleOut(currentTime, request, availServices)
+  }
+
+  private def checkScaleIn(currentTime: Int, request: Request, availServices: List[Service]) {
     if (shouldScaleIn(currentTime, request, availServices))
       scaleIn(currentTime, serviceToScaleIn(availServices))
+  }
+
+  private def checkScaleOut(currentTime: Int, request: Request, availServices: List[Service]) {
+    if (shouldScaleOut(currentTime, request, availServices))
+      scaleOut(currentTime)
   }
 
 }
