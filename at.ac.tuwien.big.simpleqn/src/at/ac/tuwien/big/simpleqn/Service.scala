@@ -103,5 +103,18 @@ class Service(val name: String, val serviceTime: Int) {
   def utilization(range: Range): Double = {
     busyTime(range) / range.length.toDouble
   }
+  
+  def throughput(range: Range): Double = {
+    // alternative: utilization(range) / avgServiceRequirementPerRequest(range)
+    requestsCompletedWithin(range).length.toDouble / range.length
+  }
+  
+  def avgServiceRequirementPerRequest(range: Range): Double = {
+    (busyTime(range) / requestsCompletedWithin(range).length.toDouble)
+  }
+  
+  private def requestsCompletedWithin(range: Range) = {
+    queue.filter(r => r.arrivalTime >= range.start && r.leavingServiceTime <=range.end)
+  }
 
 }
